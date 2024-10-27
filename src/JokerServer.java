@@ -30,7 +30,7 @@ public class JokerServer {
         actionMap.put("L", this::moveLeft);
         actionMap.put("R", this::moveRight);
 
-        nextRound();
+        nextRound();//hello
 
         ServerSocket srvSocket = new ServerSocket(port);
         while (true) {
