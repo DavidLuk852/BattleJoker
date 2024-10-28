@@ -12,6 +12,8 @@ public class JokerServer {
 
     ArrayList<Socket> clientList = new ArrayList<>();
 
+    //fff
+
     public static final int LIMIT = 14;
     public static final int SIZE = 4;
     final int[] board = new int[SIZE * SIZE];
