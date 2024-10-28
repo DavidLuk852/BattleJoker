@@ -17,6 +17,8 @@ public class JokerServer {
     //galkllll
     //fhioanoina
 
+    //fafaf
+
     public static final int LIMIT = 14;
     public static final int SIZE = 4;
     final int[] board = new int[SIZE * SIZE];
