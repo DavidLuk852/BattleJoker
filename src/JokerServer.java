@@ -18,6 +18,7 @@ public class JokerServer {
     //fhioanoina
 
     //fafaf
+    //qqqqq
 
     public static final int LIMIT = 14;
     public static final int SIZE = 4;
