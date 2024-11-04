@@ -78,6 +78,7 @@ public class JokerServer {
             synchronized (clientList){ /// lock the client list, other thread will wait outside the zone
                 moveMerge("" + dir);
 
+                sendScore(new DataOutputStream(clientSocket.getOutputStream()));
                 for(Socket s : clientList){
                     DataOutputStream out = new DataOutputStream(s.getOutputStream());
                     out.write(dir);
@@ -100,6 +101,12 @@ public class JokerServer {
         for(int v: board){
             out.writeInt(v);
         }
+        out.flush();
+    }
+
+    void sendScore(DataOutputStream out) throws IOException{
+        out.write('S');
+        out.writeInt(score);
         out.flush();
     }
     private boolean nextRound() {

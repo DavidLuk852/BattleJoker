@@ -19,7 +19,7 @@ public class GameEngine {
 
 //    private String playerName;
 //    private int level = 1;
-//    private int score;
+    private int score;
 //    private int combo;
 //    private int totalMoveCount;
 //    private int numOfTilesMoved;
@@ -41,6 +41,9 @@ public class GameEngine {
                         // download array
                         receiveArray(in);
                         break;
+                    case 'S':
+                        receiveScore(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -58,6 +61,10 @@ public class GameEngine {
             System.out.print(board[i]);
         }
         System.out.println();
+    }
+
+    void receiveScore(DataInputStream in) throws IOException{
+        score = in.readInt();
     }
 
     private GameEngine() {
@@ -236,9 +243,9 @@ public class GameEngine {
 //        playerName = name;
 //    }
 //
-//    public int getScore() {
-//        return score;
-//    }
+    public int getScore() {
+        return score;
+    }
 //
 //    public int getCombo() {
 //        return combo;

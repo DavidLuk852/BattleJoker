@@ -88,7 +88,7 @@ public class GameWindow {
         canvas.setOnKeyPressed(event -> {
             try{
                 gameEngine.moveMerge(event.getCode().toString());
-//                scoreLabel.setText("Score: " + gameEngine.getScore());
+                scoreLabel.setText("Score: " + gameEngine.getScore());
 //                levelLabel.setText("Level: " + gameEngine.getLevel());
 //                comboLabel.setText("Combo: " + gameEngine.getCombo());
 //                moveCountLabel.setText("# of Moves: " + gameEngine.getMoveCount());
