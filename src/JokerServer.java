@@ -71,6 +71,7 @@ public class JokerServer {
 
         // send a copy of the array to the client when it has just connected
         sendArray(new DataOutputStream(clientSocket.getOutputStream()));
+        sendLevel(new DataOutputStream(clientSocket.getOutputStream()));
         while(true){
             char dir = (char) in.read();
             System.out.println(dir);
@@ -79,8 +80,9 @@ public class JokerServer {
                 moveMerge("" + dir);
 
                 sendScore(new DataOutputStream(clientSocket.getOutputStream()));
-
                 sendLevel(new DataOutputStream(clientSocket.getOutputStream()));
+                sendCombo(new DataOutputStream(clientSocket.getOutputStream()));
+                sendMove(new DataOutputStream(clientSocket.getOutputStream()));
 
                 for(Socket s : clientList){
                     DataOutputStream out = new DataOutputStream(s.getOutputStream());
@@ -90,7 +92,7 @@ public class JokerServer {
 
                     //send the array to the client
                     sendArray(out);
-
+                    sendLevel(out);
                 }
             }
 
@@ -119,6 +121,19 @@ public class JokerServer {
         out.writeInt(level);
         out.flush();
     }
+
+    void sendCombo(DataOutputStream out) throws IOException{
+        out.write('C');
+        out.writeInt(combo);
+        out.flush();
+    }
+
+    void sendMove(DataOutputStream out) throws IOException{
+        out.write('M');
+        out.writeInt(totalMoveCount);
+        out.flush();
+    }
+
     private boolean nextRound() {
         if (isFull()) return false;
         int i;

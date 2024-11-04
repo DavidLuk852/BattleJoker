@@ -21,8 +21,8 @@ public class GameEngine {
 //    private String playerName;
     private int level = 1;
     private int score;
-//    private int combo;
-//    private int totalMoveCount;
+    private int combo;
+    private int totalMoveCount;
 //    private int numOfTilesMoved;
 
 //    private final Map<String, Runnable> actionMap = new HashMap<>();
@@ -47,6 +47,12 @@ public class GameEngine {
                         break;
                     case 'l':
                         receiveLevel(in);
+                        break;
+                    case 'C':
+                        receiveCombo(in);
+                        break;
+                    case 'M':
+                        receiveMove(in);
                         break;
                     default:
                         // print the direction
@@ -77,9 +83,19 @@ public class GameEngine {
         System.out.println(level);
     }
 
+    void receiveCombo(DataInputStream in) throws IOException{
+        combo = in.readInt();
+        System.out.println(combo);
+    }
+
+    void receiveMove(DataInputStream in) throws IOException{
+        totalMoveCount = in.readInt();
+        System.out.println(totalMoveCount);
+    }
+
     private GameEngine() {
         try{
-            clientSocket = new Socket("127.0.0.1", 12345);
+            clientSocket = new Socket("158.182.6.130", 12345);
             out = new DataOutputStream(clientSocket.getOutputStream());
             in = new DataInputStream(clientSocket.getInputStream());
             receiverThread.start();
@@ -257,15 +273,15 @@ public class GameEngine {
         return score;
     }
 //
-//    public int getCombo() {
-//        return combo;
-//    }
+    public int getCombo() {
+        return combo;
+    }
 //
     public int getLevel() {
         return level;
     }
 //
-//    public int getMoveCount() {
-//        return totalMoveCount;
-//    }
+    public int getMoveCount() {
+        return totalMoveCount;
+    }
 }
