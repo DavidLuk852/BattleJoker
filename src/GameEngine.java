@@ -95,7 +95,7 @@ public class GameEngine {
 
     private GameEngine() {
         try{
-            clientSocket = new Socket("158.182.6.130", 12345);
+            clientSocket = new Socket("127.0.0.1", 12345);
             out = new DataOutputStream(clientSocket.getOutputStream());
             in = new DataInputStream(clientSocket.getInputStream());
             receiverThread.start();
