@@ -10,7 +10,8 @@ import java.util.Random;
 
 public class JokerServer {
 
-    ArrayList<Socket> clientList = new ArrayList<>();
+    ArrayList<Player> clientList = new ArrayList<>();
+
     public static final int LIMIT = 14;
     public static final int SIZE = 4;
     final int[] board = new int[SIZE * SIZE];
@@ -34,47 +35,48 @@ public class JokerServer {
         ServerSocket srvSocket = new ServerSocket(port);
         while (true) {
             Socket clientSocket = srvSocket.accept();
+            Player player = new Player(clientSocket, playerName, 0, 0);
 
             synchronized (clientList){
-                clientList.add(clientSocket);
+                clientList.add(player);
             }
 
             Thread childThread = new Thread(()->{
                 try{
-                    serve(clientSocket);
+                    serve(player);
                 } catch(IOException ex){
                     ex.printStackTrace();
                 }
 
                 synchronized (clientList){
-                    clientList.remove(clientSocket);
+                    clientList.remove(player);
                 }
             });
             childThread.start();
         }
     }
 
-    public void serve(Socket clientSocket) throws IOException {
-        System.out.println(clientSocket.getInetAddress());
-        DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+    public void serve(Player player) throws IOException {
+        System.out.println(player.socket.getInetAddress());
+        DataInputStream in = new DataInputStream(player.socket.getInputStream());
 
         // send a copy of the array to the client when it has just connected
-        sendArray(new DataOutputStream(clientSocket.getOutputStream()));
-        sendLevel(new DataOutputStream(clientSocket.getOutputStream()));
+        sendArray(new DataOutputStream(player.socket.getOutputStream()));
+        sendLevel(new DataOutputStream(player.socket.getOutputStream()));
         while(true){
             char dir = (char) in.read();
             System.out.println(dir);
 
             synchronized (clientList){ /// lock the client list, other thread will wait outside the zone
-                moveMerge("" + dir);
+                moveMerge("" + dir, player);
 
-                sendScore(new DataOutputStream(clientSocket.getOutputStream()));
-                sendLevel(new DataOutputStream(clientSocket.getOutputStream()));
-                sendCombo(new DataOutputStream(clientSocket.getOutputStream()));
-                sendMove(new DataOutputStream(clientSocket.getOutputStream()));
+                sendScore(new DataOutputStream(player.socket.getOutputStream()), player);
+                sendLevel(new DataOutputStream(player.socket.getOutputStream()));
+                sendCombo(new DataOutputStream(player.socket.getOutputStream()));
+                sendMove(new DataOutputStream(player.socket.getOutputStream()), player);
 
-                for(Socket s : clientList){
-                    DataOutputStream out = new DataOutputStream(s.getOutputStream());
+                for(Player s : clientList){
+                    DataOutputStream out = new DataOutputStream(s.socket.getOutputStream());
                     out.write(dir);
                     out.flush();
                     //DO NOT CLOSE the socket or the output stream
@@ -99,9 +101,9 @@ public class JokerServer {
         out.flush();
     }
 
-    void sendScore(DataOutputStream out) throws IOException{
+    void sendScore(DataOutputStream out, Player player) throws IOException{
         out.write('S');
-        out.writeInt(score);
+        out.writeInt(player.score);
         out.flush();
     }
 
@@ -117,9 +119,9 @@ public class JokerServer {
         out.flush();
     }
 
-    void sendMove(DataOutputStream out) throws IOException{
+    void sendMove(DataOutputStream out, Player player) throws IOException{
         out.write('M');
-        out.writeInt(totalMoveCount);
+        out.writeInt(player.totalMoveCount);
         out.flush();
     }
 
@@ -190,7 +192,7 @@ public class JokerServer {
                     j += d;
                     board[j] = 0;
                     v++;
-                    score++;
+//                    player.score++;
                     combo++;
                 }
                 board[j] = v;
@@ -232,7 +234,7 @@ public class JokerServer {
         return totalMoveCount;
     }
 
-    public void moveMerge(String dir){
+    public void moveMerge(String dir, Player player){
         synchronized (board) {
             if (actionMap.containsKey(dir)) {
                 combo = numOfTilesMoved = 0;
@@ -241,11 +243,11 @@ public class JokerServer {
                 actionMap.get(dir).run();
 
                 // calculate the new score
-                score += combo / 5 * 2;
+                player.score += combo / 5 * 2;
 
                 // determine whether the game is over or not
                 if (numOfTilesMoved > 0) {
-                    totalMoveCount++;
+                    player.totalMoveCount++;
                     gameOver = level == LIMIT || !nextRound();
                 } else
                     gameOver = isFull();

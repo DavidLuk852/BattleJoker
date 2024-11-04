@@ -39,7 +39,7 @@ public class GameEngine {
             in = new DataInputStream(clientSocket.getInputStream());
             while(true){
                 char data = (char) in.read();
-                System.out.println(data);
+                System.out.print(data + ": ");
                 switch (data){
                     case 'A':
                         // download array
