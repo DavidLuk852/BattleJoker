@@ -88,7 +88,7 @@ public class GameWindow {
         canvas.setOnKeyPressed(event -> {
             try{
                 gameEngine.moveMerge(event.getCode().toString());
-                scoreLabel.setText("Score: " + gameEngine.getScore());
+//                scoreLabel.setText("Score: " + gameEngine.getScore());
 //                levelLabel.setText("Level: " + gameEngine.getLevel());
 //                comboLabel.setText("Combo: " + gameEngine.getCombo());
 //                moveCountLabel.setText("# of Moves: " + gameEngine.getMoveCount());
@@ -137,6 +137,9 @@ public class GameWindow {
 
         double y = startY;
         int v;
+
+        scoreLabel.setText("Score: " + gameEngine.getScore());
+        levelLabel.setText("Level: " + gameEngine.getLevel());
 
         // Draw the background and cards from left to right, and top to bottom.
         for (int i = 0; i < GameEngine.SIZE; i++) {

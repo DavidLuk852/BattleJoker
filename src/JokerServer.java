@@ -79,6 +79,9 @@ public class JokerServer {
                 moveMerge("" + dir);
 
                 sendScore(new DataOutputStream(clientSocket.getOutputStream()));
+
+                sendLevel(new DataOutputStream(clientSocket.getOutputStream()));
+
                 for(Socket s : clientList){
                     DataOutputStream out = new DataOutputStream(s.getOutputStream());
                     out.write(dir);
@@ -87,6 +90,7 @@ public class JokerServer {
 
                     //send the array to the client
                     sendArray(out);
+
                 }
             }
 
@@ -107,6 +111,12 @@ public class JokerServer {
     void sendScore(DataOutputStream out) throws IOException{
         out.write('S');
         out.writeInt(score);
+        out.flush();
+    }
+
+    void sendLevel(DataOutputStream out) throws IOException{
+        out.write('l');
+        out.writeInt(level);
         out.flush();
     }
     private boolean nextRound() {

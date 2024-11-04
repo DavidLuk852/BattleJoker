@@ -1,3 +1,4 @@
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class GameEngine {
 //    private boolean gameOver;
 
 //    private String playerName;
-//    private int level = 1;
+    private int level = 1;
     private int score;
 //    private int combo;
 //    private int totalMoveCount;
@@ -44,6 +45,9 @@ public class GameEngine {
                     case 'S':
                         receiveScore(in);
                         break;
+                    case 'l':
+                        receiveLevel(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -65,6 +69,12 @@ public class GameEngine {
 
     void receiveScore(DataInputStream in) throws IOException{
         score = in.readInt();
+        System.out.println(score);
+    }
+
+    void receiveLevel(DataInputStream in) throws IOException{
+        level = in.readInt();
+        System.out.println(level);
     }
 
     private GameEngine() {
@@ -251,9 +261,9 @@ public class GameEngine {
 //        return combo;
 //    }
 //
-//    public int getLevel() {
-//        return level;
-//    }
+    public int getLevel() {
+        return level;
+    }
 //
 //    public int getMoveCount() {
 //        return totalMoveCount;
