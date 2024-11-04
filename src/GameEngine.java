@@ -23,6 +23,9 @@ public class GameEngine {
     private int score;
     private int combo;
     private int totalMoveCount;
+
+    private long startTime;  // To record when the game starts
+    private boolean timerRunning = false;  // To track if the timer is running
 //    private int numOfTilesMoved;
 
 //    private final Map<String, Runnable> actionMap = new HashMap<>();
@@ -284,4 +287,23 @@ public class GameEngine {
     public int getMoveCount() {
         return totalMoveCount;
     }
+
+    public void startTimer() {
+        startTime = System.currentTimeMillis();
+        timerRunning = true;
+    }
+
+    public void stopTimer() {
+        timerRunning = false;
+    }
+
+    public double getElapsedTime() {
+        if (!timerRunning) {
+            return 0;
+        }
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        return elapsedTime / 1000.0;  // Convert milliseconds to seconds
+    }
 }
+
+

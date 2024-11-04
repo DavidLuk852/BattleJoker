@@ -11,17 +11,6 @@ import java.util.Random;
 public class JokerServer {
 
     ArrayList<Socket> clientList = new ArrayList<>();
-
-    //fff
-    //gga
-    //galkllll
-    //fhioanoina
-
-    //fafaf
-    //qqqqq
-    //ssaa
-    //dafasfas
-
     public static final int LIMIT = 14;
     public static final int SIZE = 4;
     final int[] board = new int[SIZE * SIZE];

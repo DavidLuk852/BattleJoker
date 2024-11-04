@@ -42,6 +42,8 @@ public class GameWindow {
     @FXML
     Canvas canvas;
 
+    @FXML Label timerLabel;
+    long startTime;
     Stage stage;
     AnimationTimer animationTimer;
 
@@ -76,6 +78,8 @@ public class GameWindow {
     }
 
     private void gameStart() {
+        startTime = System.currentTimeMillis();  // Initialize the start time
+        gameEngine.startTimer();  // Start the timer in GameEngine
         animationTimer.start();
     }
 
@@ -102,6 +106,7 @@ public class GameWindow {
             @Override
             public void handle(long now) {
                 render();
+                updateTimerDisplay();
 //                if (gameEngine.isGameOver()) {
 //                    System.out.println("Game Over!");
 //                    animationTimer.stop();
@@ -118,6 +123,12 @@ public class GameWindow {
             }
         };
         canvas.requestFocus();
+    }
+
+    private void updateTimerDisplay() {
+        long elapsedTime = System.currentTimeMillis() - startTime;  // Get elapsed time
+        double seconds = elapsedTime / 1000.0;  // Convert milliseconds to seconds
+        timerLabel.setText(String.format("Time: %.2f s", seconds));  // Update timer label
     }
 
     private void render() {
