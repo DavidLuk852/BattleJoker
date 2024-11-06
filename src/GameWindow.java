@@ -42,7 +42,8 @@ public class GameWindow {
     @FXML
     Canvas canvas;
 
-    @FXML Label timerLabel;
+    @FXML
+    Label timerLabel;
     long startTime;
     Stage stage;
     AnimationTimer animationTimer;
@@ -90,13 +91,13 @@ public class GameWindow {
 
     private void initCanvas() {
         canvas.setOnKeyPressed(event -> {
-            try{
+            try {
                 gameEngine.moveMerge(event.getCode().toString());
                 scoreLabel.setText("Score: " + gameEngine.getScore());
                 levelLabel.setText("Level: " + gameEngine.getLevel());
 //                comboLabel.setText("Combo: " + gameEngine.getCombo());
 //                moveCountLabel.setText("# of Moves: " + gameEngine.getMoveCount());
-            } catch (IOException ex){
+            } catch (IOException ex) {
                 ex.printStackTrace();
                 System.exit(-1);
             }
@@ -107,19 +108,18 @@ public class GameWindow {
             public void handle(long now) {
                 render();
                 updateTimerDisplay();
-//                if (gameEngine.isGameOver()) {
-//                    System.out.println("Game Over!");
-//                    animationTimer.stop();
-//
-//                    Platform.runLater(() -> {
-//                        try {
-//                            new ScoreboardWindow();
-//                        } catch (IOException ex) {
-//                            throw new RuntimeException(ex);
-//                        }
-//                    });
-//
-//                }
+                if (gameEngine.isGameOver()) {
+                    System.out.println("Game Over!");
+                    animationTimer.stop();
+                    Platform.runLater(() -> {
+                        try {
+                            new ScoreboardWindow();
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    });
+
+                }
             }
         };
         canvas.requestFocus();
@@ -193,6 +193,6 @@ public class GameWindow {
 
     public void setName(String name) {
         nameLabel.setText(name);
-//        gameEngine.setPlayerName(name);
+        gameEngine.setPlayerName(name);
     }
 }

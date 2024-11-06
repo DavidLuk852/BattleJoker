@@ -1,3 +1,4 @@
+import javax.xml.crypto.Data;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Consumer;
 
 public class JokerServer {
 
@@ -16,7 +18,7 @@ public class JokerServer {
     public static final int SIZE = 4;
     final int[] board = new int[SIZE * SIZE];
     Random random = new Random(0);
-    private final Map<String, Runnable> actionMap = new HashMap<>();
+    private final Map<String, Consumer<Player>> actionMap = new HashMap<>();
     private int combo;
     private int numOfTilesMoved;
     private int score;
@@ -24,6 +26,7 @@ public class JokerServer {
     private boolean gameOver;
     private int level = 1;
     private String playerName;
+
     public JokerServer(int port) throws IOException {
         actionMap.put("U", this::moveUp);
         actionMap.put("D", this::moveDown);
@@ -35,7 +38,7 @@ public class JokerServer {
         ServerSocket srvSocket = new ServerSocket(port);
         while (true) {
             Socket clientSocket = srvSocket.accept();
-            Player player = new Player(clientSocket, playerName, 0, 0);
+            Player player = new Player(clientSocket, playerName, 0, 0, 1);
 
             synchronized (clientList){
                 clientList.add(player);
@@ -64,6 +67,8 @@ public class JokerServer {
         sendArray(new DataOutputStream(player.socket.getOutputStream()));
         sendLevel(new DataOutputStream(player.socket.getOutputStream()));
         while(true){
+            player.name = in.readUTF();
+            System.out.println(player.name);
             char dir = (char) in.read();
             System.out.println(dir);
 
@@ -84,6 +89,7 @@ public class JokerServer {
                     //send the array to the client
                     sendArray(out);
                     sendLevel(out);
+                    sendGameOver(out);
                 }
             }
 
@@ -125,6 +131,16 @@ public class JokerServer {
         out.flush();
     }
 
+    void sendGameOver(DataOutputStream out) throws IOException{
+        out.write('G');
+        if(gameOver){
+            out.writeInt(1);
+        }else{
+            out.writeInt(0);
+        }
+        out.flush();
+    }
+
     private boolean nextRound() {
         if (isFull()) return false;
         int i;
@@ -145,36 +161,36 @@ public class JokerServer {
         return true;
     }
 
-    private void moveDown() {
+    private void moveDown(Player player) {
         for (int i = 0; i < SIZE; i++)
-            moveMerge(SIZE, SIZE * (SIZE - 1) + i, i);
+            moveMerge(SIZE, SIZE * (SIZE - 1) + i, i, player);
     }
 
     /**
      * move the values upward and merge them.
      */
-    private void moveUp() {
+    private void moveUp(Player player) {
         for (int i = 0; i < SIZE; i++)
-            moveMerge(-SIZE, i, SIZE * (SIZE - 1) + i);
+            moveMerge(-SIZE, i, SIZE * (SIZE - 1) + i, player);
     }
 
     /**
      * move the values rightward and merge them.
      */
-    private void moveRight() {
+    private void moveRight(Player player) {
         for (int i = 0; i <= SIZE * (SIZE - 1); i += SIZE)
-            moveMerge(1, SIZE - 1 + i, i);
+            moveMerge(1, SIZE - 1 + i, i, player);
     }
 
     /**
      * move the values leftward and merge them.
      */
-    private void moveLeft() {
+    private void moveLeft(Player player) {
         for (int i = 0; i <= SIZE * (SIZE - 1); i += SIZE)
-            moveMerge(-1, i, SIZE - 1 + i);
+            moveMerge(-1, i, SIZE - 1 + i, player);
     }
 
-    private void moveMerge(int d, int s, int l) {
+    private void moveMerge(int d, int s, int l, Player player) {
         int v, j;
         for (int i = s - d; i != l - d; i -= d) {
             j = i;
@@ -192,11 +208,14 @@ public class JokerServer {
                     j += d;
                     board[j] = 0;
                     v++;
-//                    player.score++;
+                    player.score++;
                     combo++;
                 }
                 board[j] = v;
-                if (v > level) level = v;
+                if (v > level) {
+                    level = v;
+                    player.level = v;
+                }
             }
             if (i != j)
                 numOfTilesMoved++;
@@ -240,7 +259,7 @@ public class JokerServer {
                 combo = numOfTilesMoved = 0;
 
                 // go to the hash map, find the corresponding method and call it
-                actionMap.get(dir).run();
+                actionMap.get(dir).accept(player);
 
                 // calculate the new score
                 player.score += combo / 5 * 2;
@@ -255,7 +274,7 @@ public class JokerServer {
                 // update the database if the game is over
                 if (gameOver) {
                     try {
-                        Database.putScore(playerName, score, level);
+                        Database.putScore(player.name, player.score, player.level);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }

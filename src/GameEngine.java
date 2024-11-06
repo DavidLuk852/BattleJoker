@@ -16,9 +16,9 @@ public class GameEngine {
     //Random random = new Random(0);
 
     private static GameEngine instance;
-//    private boolean gameOver;
+    private boolean gameOver;
 
-//    private String playerName;
+    private String playerName;
     private int level = 1;
     private int score;
     private int combo;
@@ -57,6 +57,9 @@ public class GameEngine {
                     case 'M':
                         receiveMove(in);
                         break;
+                    case 'G':
+                        receiveGameOver(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -94,6 +97,16 @@ public class GameEngine {
     void receiveMove(DataInputStream in) throws IOException{
         totalMoveCount = in.readInt();
         System.out.println(totalMoveCount);
+    }
+
+    void receiveGameOver(DataInputStream in) throws IOException{
+        int index = in.readInt();
+        if(index == 0){
+            gameOver = false;
+        }else{
+            gameOver = true;
+        }
+        System.out.println(index);
     }
 
     private GameEngine() {
@@ -157,6 +170,7 @@ public class GameEngine {
     public void moveMerge(String dir) throws IOException {
 
         System.out.println(dir);
+        out.writeUTF(playerName);
         /// send direction to server
         out.write(dir.charAt(0));
         out.flush();
@@ -264,14 +278,14 @@ public class GameEngine {
         }
     }
 
-//    public boolean isGameOver() {
-//        return gameOver;
-//    }
-//
-//    public void setPlayerName(String name) {
-//        playerName = name;
-//    }
-//
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public void setPlayerName(String name) {
+        playerName = name;
+    }
+
     public int getScore() {
         return score;
     }
