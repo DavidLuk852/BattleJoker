@@ -26,6 +26,10 @@ public class GameEngine {
 
     private long startTime;  // To record when the game starts
     private boolean timerRunning = false;  // To track if the timer is running
+
+    private String ip;
+    private int port;
+
 //    private int numOfTilesMoved;
 
 //    private final Map<String, Runnable> actionMap = new HashMap<>();
@@ -286,18 +290,26 @@ public class GameEngine {
         playerName = name;
     }
 
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public void setPort(String port) {
+        this.port = Integer.parseInt(port);
+    }
+
     public int getScore() {
         return score;
     }
-//
+
     public int getCombo() {
         return combo;
     }
-//
+
     public int getLevel() {
         return level;
     }
-//
+
     public int getMoveCount() {
         return totalMoveCount;
     }

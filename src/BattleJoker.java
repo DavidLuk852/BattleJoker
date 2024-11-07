@@ -21,7 +21,7 @@ public class BattleJoker extends Application {
             GameWindow win = new GameWindow(primaryStage);
             win.setName(dialog.getPlayername());
 
-            Database.connect();
+            JokerServer.connect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -30,7 +30,7 @@ public class BattleJoker extends Application {
     @Override
     public void stop() {
         try {
-            Database.disconnect();
+            JokerServer.disconnect();
         } catch (SQLException ignored) {
         }
     }

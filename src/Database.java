@@ -34,18 +34,18 @@ public class Database {
         }
         return data;
     }
+//
+//    public static void putScore(String name, int score, int level) throws SQLException {
+//        String sql = String.format("INSERT INTO scores ('name', 'score', 'level', 'time') VALUES ('%s', %d, %d, datetime('now'))", name, score, level);
+//        Statement statement = conn.createStatement();
+//        statement.execute(sql);
+//    }
 
-    public static void putScore(String name, int score, int level) throws SQLException {
-        String sql = String.format("INSERT INTO scores ('name', 'score', 'level', 'time') VALUES ('%s', %d, %d, datetime('now'))", name, score, level);
-        Statement statement = conn.createStatement();
-        statement.execute(sql);
-    }
-
-    public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        connect();
-        putScore("Bob", 1000, 13);
-        getScores().forEach(map->{
-            System.out.println(map.get("name"));
-        });
-    }
+//    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+//        connect();
+//        putScore("Bob", 1000, 13);
+//        getScores().forEach(map->{
+//            System.out.println(map.get("name"));
+//        });
+//    }
 }

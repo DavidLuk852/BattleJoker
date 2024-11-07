@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +12,9 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 public class JokerServer {
+
+    final static String url = "jdbc:sqlite:data/battleJoker.db";
+    static Connection conn;
 
     ArrayList<Player> clientList = new ArrayList<>();
 
@@ -68,7 +72,7 @@ public class JokerServer {
         sendLevel(new DataOutputStream(player.socket.getOutputStream()));
         while(true){
             player.name = in.readUTF();
-            System.out.println(player.name);
+            System.out.print(player.name + ": ");
             char dir = (char) in.read();
             System.out.println(dir);
 
@@ -274,13 +278,51 @@ public class JokerServer {
                 // update the database if the game is over
                 if (gameOver) {
                     try {
-                        Database.putScore(player.name, player.score, player.level);
+                        connect();
+                        for(Player p : clientList){
+                            putScore(p.name, p.score, p.level);
+                        }
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
             }
         }
+    }
+
+    public static void connect() throws SQLException, ClassNotFoundException {
+        if (conn == null) {
+//            Class.forName("org.sqlite.JDBC");
+            conn = DriverManager.getConnection(url);
+        }
+
+    }
+
+    public static void disconnect() throws SQLException {
+        if (conn != null)
+            conn.close();
+    }
+
+    public static ArrayList<HashMap<String, String>> getScores() throws SQLException {
+        String sql = "SELECT * FROM scores ORDER BY score DESC LIMIT 10";
+        ArrayList<HashMap<String, String>> data = new ArrayList<>();
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery(sql);
+        while (resultSet.next()) {
+            HashMap<String, String> m = new HashMap<>();
+            m.put("name", resultSet.getString("name"));
+            m.put("score", resultSet.getString("score"));
+            m.put("level", resultSet.getString("level"));
+            m.put("time", resultSet.getString("time"));
+            data.add(m);
+        }
+        return data;
+    }
+
+    public static void putScore(String name, int score, int level) throws SQLException {
+        String sql = String.format("INSERT INTO scores ('name', 'score', 'level', 'time') VALUES ('%s', %d, %d, datetime('now'))", name, score, level);
+        Statement statement = conn.createStatement();
+        statement.execute(sql);
     }
 
     public static void  main(String[] args) throws IOException{
