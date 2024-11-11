@@ -12,15 +12,18 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
-public class ScoreboardWindow {
+public class gameWinnerWindow {
     Stage stage;
 
     @FXML
     ListView<String> scoreList;
+    @FXML
+    Button goButton;
 
-    public ScoreboardWindow() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("scoreUI.fxml"));
+    public gameWinnerWindow() throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("gameWinnerUI.fxml"));
         loader.setController(this);
         Parent root = loader.load();
         Scene scene = new Scene(root);
@@ -33,6 +36,8 @@ public class ScoreboardWindow {
 
         setFont(14);
         updateList();
+
+        goButton.setOnMouseClicked(this::OnButtonClick);
 
         stage.showAndWait();
     }
@@ -55,6 +60,7 @@ public class ScoreboardWindow {
     private void updateList() {
         try {
             ObservableList<String> items = FXCollections.observableArrayList();
+
             JokerServer.connect();
             JokerServer.getScores().forEach(data->{
                 String scoreStr = String.format("%s (%s)", data.get("score"), data.get("level"));
@@ -63,6 +69,15 @@ public class ScoreboardWindow {
             scoreList.setItems(items);
         } catch(Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    @FXML
+    void OnButtonClick(Event event) {
+        try {
+            new ScoreboardWindow();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }

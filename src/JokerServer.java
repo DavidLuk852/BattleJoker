@@ -1,4 +1,3 @@
-import javax.xml.crypto.Data;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -42,10 +41,11 @@ public class JokerServer {
         ServerSocket srvSocket = new ServerSocket(port);
         while (true) {
             Socket clientSocket = srvSocket.accept();
-            Player player = new Player(clientSocket, playerName, 0, 0, 1);
+            Player player = new Player(clientSocket, playerName, 0, 0, 1, 0);
 
             synchronized (clientList){
                 clientList.add(player);
+                sendPlayer(new DataOutputStream(player.socket.getOutputStream()));
             }
 
             Thread childThread = new Thread(()->{
@@ -67,9 +67,11 @@ public class JokerServer {
         System.out.println(player.socket.getInetAddress());
         DataInputStream in = new DataInputStream(player.socket.getInputStream());
 
+
         // send a copy of the array to the client when it has just connected
         sendArray(new DataOutputStream(player.socket.getOutputStream()));
         sendLevel(new DataOutputStream(player.socket.getOutputStream()));
+
         while(true){
             player.name = in.readUTF();
             System.out.print(player.name + ": ");
@@ -101,6 +103,11 @@ public class JokerServer {
         }
     }
 
+    void sendPlayer(DataOutputStream out) throws IOException{
+        out.write(('P'));
+        out.writeInt(clientList.size());
+        out.flush();
+    }
     void sendArray(DataOutputStream out) throws IOException{
         //send the array to the client
         out.write('A');

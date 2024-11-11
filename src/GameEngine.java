@@ -1,4 +1,5 @@
 
+import javax.xml.crypto.Data;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -23,10 +24,9 @@ public class GameEngine {
     private int score;
     private int combo;
     private int totalMoveCount;
-
+    private int playerCount;
     private long startTime;  // To record when the game starts
     private boolean timerRunning = false;  // To track if the timer is running
-
 
 //    private int numOfTilesMoved;
 
@@ -62,6 +62,9 @@ public class GameEngine {
                     case 'G':
                         receiveGameOver(in);
                         break;
+                    case 'P':
+                        receivePlayer(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -72,6 +75,10 @@ public class GameEngine {
         }
     });
 
+    void receivePlayer(DataInputStream in) throws IOException{
+        playerCount = in.readInt();
+        System.out.println(playerCount);
+    }
     void receiveArray(DataInputStream in) throws IOException {
         int size = in.readInt();
         for(int i=0; i<size; i++) {
@@ -280,10 +287,12 @@ public class GameEngine {
         }
     }
 
+    public int getPlayerCount(){
+        return playerCount;
+    }
     public boolean isGameOver() {
         return gameOver;
     }
-
     public void setPlayerName(String name) {
         playerName = name;
     }

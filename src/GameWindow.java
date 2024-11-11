@@ -1,12 +1,14 @@
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.image.Image;
@@ -16,6 +18,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GameWindow {
     @FXML
@@ -44,6 +49,8 @@ public class GameWindow {
 
     @FXML
     Label timerLabel;
+    @FXML
+    Button goButton;
     long startTime;
     Stage stage;
     AnimationTimer animationTimer;
@@ -74,10 +81,25 @@ public class GameWindow {
         stage.heightProperty().addListener(h -> onHeightChangedWindow(((ReadOnlyDoubleProperty) h).getValue()));
         stage.setOnCloseRequest(event -> quit());
 
-        stage.show();
-        initCanvas();
 
+        stage.show();
+
+        if (gameEngine.getPlayerCount() == 1) {
+            goButton.setVisible(true);
+            goButton.setDisable(false);
+            goButton.setOnMouseClicked(this::OnButtonClick);
+        }else if (gameEngine.getPlayerCount() == 4) {
+            initCanvas();
+            gameStart();
+        }
+    }
+
+    @FXML
+    void OnButtonClick(Event event){
+        initCanvas();
         gameStart();
+        goButton.setVisible(false);
+        goButton.setDisable(true);
     }
 
     private void gameStart() {
@@ -115,7 +137,7 @@ public class GameWindow {
                     animationTimer.stop();
                     Platform.runLater(() -> {
                         try {
-                            new ScoreboardWindow();
+                            new gameWinnerWindow();
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }

@@ -6,13 +6,15 @@ public class Player {
     int score;
     int totalMoveCount;
     int level;
+    int count;
 
-    public Player(Socket socket, String name, int score, int totalMoveCount, int level) {
+    public Player(Socket socket, String name, int score, int totalMoveCount, int level, int count) {
         this.socket = socket;
         this.name = name;
         this.score = score;
         this.totalMoveCount = totalMoveCount;
         this.level = level;
+        this.count = count;
     }
 
     public void setSocket(Socket socket){
