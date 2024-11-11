@@ -27,8 +27,6 @@ public class GameEngine {
     private long startTime;  // To record when the game starts
     private boolean timerRunning = false;  // To track if the timer is running
 
-    private String ip;
-    private int port;
 
 //    private int numOfTilesMoved;
 
@@ -113,9 +111,9 @@ public class GameEngine {
         System.out.println(index);
     }
 
-    private GameEngine() {
+    private GameEngine(String ip, int port) {
         try{
-            clientSocket = new Socket("127.0.0.1", 12345);
+            clientSocket = new Socket(ip, port);
             out = new DataOutputStream(clientSocket.getOutputStream());
             in = new DataInputStream(clientSocket.getInputStream());
             receiverThread.start();
@@ -134,9 +132,9 @@ public class GameEngine {
 //        nextRound();
     }
 
-    public static GameEngine getInstance() {
+    public static GameEngine getInstance(String ip, int port) {
         if (instance == null)
-            instance = new GameEngine();
+            instance = new GameEngine(ip, port);
         return instance;
     }
 
@@ -288,14 +286,6 @@ public class GameEngine {
 
     public void setPlayerName(String name) {
         playerName = name;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public void setPort(String port) {
-        this.port = Integer.parseInt(port);
     }
 
     public int getScore() {

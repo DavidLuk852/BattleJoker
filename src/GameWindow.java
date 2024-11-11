@@ -51,10 +51,12 @@ public class GameWindow {
     final String imagePath = "images/";
     final String[] symbols = {"bg", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "Joker"};
     final Image[] images = new Image[symbols.length];
-    final GameEngine gameEngine = GameEngine.getInstance();
+    GameEngine gameEngine;
 
-    public GameWindow(Stage stage) throws IOException {
+    public GameWindow(Stage stage, String ip, int port) throws IOException {
         loadImages();
+
+        gameEngine = GameEngine.getInstance(ip, port);
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("mainUI.fxml"));
         loader.setController(this);
