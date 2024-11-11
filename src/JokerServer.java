@@ -27,6 +27,7 @@ public class JokerServer {
     private int score;
     private int totalMoveCount;
     private boolean gameOver;
+    private boolean gameStart;
     private int level = 1;
     private String playerName;
 
@@ -44,8 +45,12 @@ public class JokerServer {
             Player player = new Player(clientSocket, playerName, 0, 0, 1, 0);
 
             synchronized (clientList){
-                clientList.add(player);
-                sendPlayer(new DataOutputStream(player.socket.getOutputStream()));
+                if(clientList.size() <= 4){
+                    clientList.add(player);
+                }
+                for(Player p : clientList){
+                    sendPlayer(new DataOutputStream(p.socket.getOutputStream()));
+                }
             }
 
             Thread childThread = new Thread(()->{
@@ -67,44 +72,58 @@ public class JokerServer {
         System.out.println(player.socket.getInetAddress());
         DataInputStream in = new DataInputStream(player.socket.getInputStream());
 
-
         // send a copy of the array to the client when it has just connected
         sendArray(new DataOutputStream(player.socket.getOutputStream()));
         sendLevel(new DataOutputStream(player.socket.getOutputStream()));
 
         while(true){
-            player.name = in.readUTF();
-            System.out.print(player.name + ": ");
-            char dir = (char) in.read();
-            System.out.println(dir);
+            String message = in.readUTF();
+            if(message.equals("Game Start")){
+                gameStart = true;
 
-            synchronized (clientList){ /// lock the client list, other thread will wait outside the zone
-                moveMerge("" + dir, player);
+                for(Player p : clientList){
+                    sendGameStart(new DataOutputStream(p.socket.getOutputStream()));
+                }
+            }else{
+                player.name = message;
+                System.out.print(player.name + ": ");
+                char dir = (char) in.read();
+                System.out.println(dir);
 
-                sendScore(new DataOutputStream(player.socket.getOutputStream()), player);
-                sendLevel(new DataOutputStream(player.socket.getOutputStream()));
-                sendCombo(new DataOutputStream(player.socket.getOutputStream()));
-                sendMove(new DataOutputStream(player.socket.getOutputStream()), player);
+                synchronized (clientList){ /// lock the client list, other thread will wait outside the zone
+                    moveMerge("" + dir, player);
 
-                for(Player s : clientList){
-                    DataOutputStream out = new DataOutputStream(s.socket.getOutputStream());
-                    out.write(dir);
-                    out.flush();
-                    //DO NOT CLOSE the socket or the output stream
+                    sendScore(new DataOutputStream(player.socket.getOutputStream()), player);
+                    sendLevel(new DataOutputStream(player.socket.getOutputStream()));
+                    sendCombo(new DataOutputStream(player.socket.getOutputStream()));
+                    sendMove(new DataOutputStream(player.socket.getOutputStream()), player);
 
-                    //send the array to the client
-                    sendArray(out);
-                    sendLevel(out);
-                    sendGameOver(out);
+                    for(Player s : clientList){
+                        DataOutputStream out = new DataOutputStream(s.socket.getOutputStream());
+                        out.write(dir);
+                        out.flush();
+                        //DO NOT CLOSE the socket or the output stream
+
+                        //send the array to the client
+                        sendArray(out);
+                        sendLevel(out);
+                        sendGameOver(out);
+                    }
                 }
             }
-
 //            nextRound();
         }
     }
 
+    void sendGameStart(DataOutputStream out) throws IOException {
+        out.write('T');
+        if(gameStart){
+            out.writeInt(1);
+        }
+        out.flush();
+    }
     void sendPlayer(DataOutputStream out) throws IOException{
-        out.write(('P'));
+        out.write('P');
         out.writeInt(clientList.size());
         out.flush();
     }

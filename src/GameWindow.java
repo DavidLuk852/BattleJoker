@@ -40,6 +40,8 @@ public class GameWindow {
 
     @FXML
     Label moveCountLabel;
+    @FXML
+    Label numberofPlayerLabel;
 
     @FXML
     Pane boardPane;
@@ -54,6 +56,7 @@ public class GameWindow {
     long startTime;
     Stage stage;
     AnimationTimer animationTimer;
+    AnimationTimer gameStartTimer;
 
     final String imagePath = "images/";
     final String[] symbols = {"bg", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "Joker"};
@@ -87,30 +90,62 @@ public class GameWindow {
         if (gameEngine.getPlayerCount() == 1) {
             goButton.setVisible(true);
             goButton.setDisable(false);
-            goButton.setOnMouseClicked(this::OnButtonClick);
+            goButton.setOnMouseClicked(event -> {
+                try {
+                    OnButtonClick(event);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            waitGameStart();
+        }else if (gameEngine.getPlayerCount() == 2 || gameEngine.getPlayerCount() == 3) {
+            waitGameStart();
         }else if (gameEngine.getPlayerCount() == 4) {
+            numberofPlayerLabel.setText("Number of Players: " + gameEngine.getPlayerCount());
             initCanvas();
             gameStart();
         }
     }
 
     @FXML
-    void OnButtonClick(Event event){
-        initCanvas();
-        gameStart();
+    void OnButtonClick(Event event) throws IOException {
         goButton.setVisible(false);
         goButton.setDisable(true);
+        gameEngine.setGameStarted(true);
+    }
+
+    private void waitGameStart() {
+        gameStartTimer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                updatePlayerNumber();
+                if (gameEngine.getPlayerCount() == 4 || gameEngine.getGameStarted()) {
+                    goButton.setVisible(false);
+                    goButton.setDisable(true);
+                    Platform.runLater(() -> {
+                        initCanvas();
+                        gameStart();
+                        gameStartTimer.stop(); // Stop the timer once the game starts
+                    });
+                }
+            }
+        };
+        gameStartTimer.start(); // Start the timer after it's initialized
+    }
+
+    private void updatePlayerNumber() {
+        numberofPlayerLabel.setText("Number of Players: " + gameEngine.getPlayerCount());
+    }
+
+    private void loadImages() throws IOException {
+        for (int i = 0; i < symbols.length; i++)
+            images[i] = new Image(Files.newInputStream(Paths.get(imagePath + symbols[i] + ".png")));
     }
 
     private void gameStart() {
         startTime = System.currentTimeMillis();  // Initialize the start time
         gameEngine.startTimer();  // Start the timer in GameEngine
         animationTimer.start();
-    }
-
-    private void loadImages() throws IOException {
-        for (int i = 0; i < symbols.length; i++)
-            images[i] = new Image(Files.newInputStream(Paths.get(imagePath + symbols[i] + ".png")));
     }
 
     private void initCanvas() {

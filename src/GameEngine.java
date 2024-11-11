@@ -25,8 +25,10 @@ public class GameEngine {
     private int combo;
     private int totalMoveCount;
     private int playerCount;
+    private boolean gameStarted;
     private long startTime;  // To record when the game starts
     private boolean timerRunning = false;  // To track if the timer is running
+
 
 //    private int numOfTilesMoved;
 
@@ -65,6 +67,9 @@ public class GameEngine {
                     case 'P':
                         receivePlayer(in);
                         break;
+                    case 'T':
+                        receiveGameStart(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -75,10 +80,19 @@ public class GameEngine {
         }
     });
 
+    void receiveGameStart(DataInputStream in) throws IOException {
+        int index = in.readInt();
+        if(index == 1){
+            gameStarted = true;
+        }
+        System.out.println(index);
+    }
     void receivePlayer(DataInputStream in) throws IOException{
         playerCount = in.readInt();
         System.out.println(playerCount);
+
     }
+
     void receiveArray(DataInputStream in) throws IOException {
         int size = in.readInt();
         for(int i=0; i<size; i++) {
@@ -316,6 +330,16 @@ public class GameEngine {
     public void startTimer() {
         startTime = System.currentTimeMillis();
         timerRunning = true;
+    }
+
+    public boolean getGameStarted() {
+        return gameStarted;
+    }
+
+    public void setGameStarted(boolean gameStarted) throws IOException {
+        this.gameStarted = gameStarted;
+        out.writeUTF("Game Start");
+        out.flush();
     }
 
     public void stopTimer() {
