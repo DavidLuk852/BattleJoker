@@ -28,6 +28,13 @@ public class GameEngine {
     private boolean gameStarted;
     private long startTime;  // To record when the game starts
     private boolean timerRunning = false;  // To track if the timer is running
+    private int canMove;
+    private int moveLeft;
+    private String currentPlayer;
+    private String WinnerName;
+    private int WinnerScore;
+    private int WinnerLevel;
+    private int WinnerMoves;
 
 
 //    private int numOfTilesMoved;
@@ -70,6 +77,18 @@ public class GameEngine {
                     case 'T':
                         receiveGameStart(in);
                         break;
+                    case 'Y':
+                        receiveCanMove(in);
+                        break;
+                    case 'N':
+                        receiveMoveLeft(in);
+                        break;
+                    case 'Z':
+                        receiveCurrentPlayer(in);
+                        break;
+                    case 'W':
+                        receiveWinner(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -79,6 +98,27 @@ public class GameEngine {
             ex.printStackTrace(); ///debugging only, remove it before production
         }
     });
+
+    void receiveWinner(DataInputStream in) throws IOException {
+        WinnerName = in.readUTF();
+        WinnerScore = in.readInt();
+        WinnerLevel = in.readInt();
+        WinnerMoves = in.readInt();
+    }
+    void receiveCurrentPlayer(DataInputStream in) throws IOException {
+        currentPlayer = in.readUTF();
+        System.out.println(currentPlayer);
+    }
+
+    void receiveMoveLeft(DataInputStream in) throws IOException {
+        moveLeft = in.readInt();
+        System.out.println(moveLeft);
+    }
+
+    void receiveCanMove(DataInputStream in) throws IOException {
+        canMove = in.readInt();
+        System.out.println(canMove);
+    }
 
     void receiveGameStart(DataInputStream in) throws IOException {
         int index = in.readInt();
@@ -193,8 +233,9 @@ public class GameEngine {
     public void moveMerge(String dir) throws IOException {
 
         System.out.println(dir);
-        out.writeUTF(playerName);
+//        out.writeUTF(playerName);
         /// send direction to server
+        out.writeUTF("Move Merge");
         out.write(dir.charAt(0));
         out.flush();
 
@@ -304,11 +345,20 @@ public class GameEngine {
     public int getPlayerCount(){
         return playerCount;
     }
+
     public boolean isGameOver() {
         return gameOver;
     }
-    public void setPlayerName(String name) {
+
+    public void setPlayerName(String name) throws IOException {
         playerName = name;
+        out.writeUTF("Player Name");
+        out.writeUTF(playerName);
+        out.flush();
+    }
+
+    public String getCurrentPlayer() {
+        return currentPlayer;
     }
 
     public int getScore() {
@@ -340,6 +390,26 @@ public class GameEngine {
         this.gameStarted = gameStarted;
         out.writeUTF("Game Start");
         out.flush();
+    }
+
+    public int getCanMove() {
+        return canMove;
+    }
+
+    public String getWinnerName(){
+        return WinnerName;
+    }
+
+    public int getWinnerScore(){
+        return WinnerScore;
+    }
+
+    public int getWinnerLevel(){
+        return WinnerLevel;
+    }
+
+    public int getWinnerMoveCount(){
+        return WinnerMoves;
     }
 
     public void stopTimer() {

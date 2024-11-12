@@ -13,7 +13,26 @@
             <Font size="28.0" />
         </font>
     </Label>
-    <ListView fx:id="scoreList" prefHeight="450.0" prefWidth="285.0" />
+    <Label fx:id="winnerNameLabel" text="Winner: " textAlignment="CENTER">
+        <font>
+            <Font size="20.0" />
+        </font>
+    </Label>
+    <Label fx:id="winnerScoreLabel" text="Score: " textAlignment="CENTER">
+        <font>
+            <Font size="20.0" />
+        </font>
+    </Label>
+    <Label fx:id="winnerLevelLabel" text="Level: " textAlignment="CENTER">
+        <font>
+            <Font size="20.0" />
+        </font>
+    </Label>
+    <Label fx:id="winnerMoveCountLabel" text="Total Moves: " textAlignment="CENTER">
+        <font>
+            <Font size="20.0" />
+        </font>
+    </Label>
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>

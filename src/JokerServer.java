@@ -1,3 +1,5 @@
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -30,6 +32,8 @@ public class JokerServer {
     private boolean gameStart;
     private int level = 1;
     private String playerName;
+    private Player currentPlayer;
+    private int movesLeft;
 
     public JokerServer(int port) throws IOException {
         actionMap.put("U", this::moveUp);
@@ -42,10 +46,10 @@ public class JokerServer {
         ServerSocket srvSocket = new ServerSocket(port);
         while (true) {
             Socket clientSocket = srvSocket.accept();
-            Player player = new Player(clientSocket, playerName, 0, 0, 1, 0);
+            Player player = new Player(clientSocket, playerName, 0, 0, 1);
 
             synchronized (clientList){
-                if(clientList.size() <= 4){
+                if(clientList.size() <= 4 && !gameStart){
                     clientList.add(player);
                 }
                 for(Player p : clientList){
@@ -53,61 +57,153 @@ public class JokerServer {
                 }
             }
 
-            Thread childThread = new Thread(()->{
-                try{
-                    serve(player);
-                } catch(IOException ex){
-                    ex.printStackTrace();
-                }
+            if(clientList.size() <= 4 && !gameStart){
+                Thread childThread = new Thread(()->{
+                    try{
+                        serve(player);
+                    } catch(IOException ex){
+                        ex.printStackTrace();
+                    }
 
-                synchronized (clientList){
-                    clientList.remove(player);
-                }
-            });
-            childThread.start();
+                    synchronized (clientList){
+                        clientList.remove(player);
+                    }
+                });
+                childThread.start();
+            }else{
+                Thread childThread = new Thread(()->{
+                    try{
+                        serve2(player);
+                    } catch(IOException ex){
+                        ex.printStackTrace();
+                    }
+
+                    synchronized (clientList){
+                        clientList.remove(player);
+                    }
+                });
+                childThread.start();
+            }
+//            Thread childThread = new Thread(()->{
+//                try{
+//                    serve(player);
+//                } catch(IOException ex){
+//                    ex.printStackTrace();
+//                }
+//
+//                synchronized (clientList){
+//                    clientList.remove(player);
+//                }
+//            });
+//            childThread.start();
         }
+    }
+
+    public void serve2(Player player)throws IOException{
+        System.out.println(player.socket.getInetAddress());
+        DataInputStream in = new DataInputStream(player.socket.getInputStream());
+        DataOutputStream out = new DataOutputStream(player.socket.getOutputStream());
+
+        sendPlayer(out);
+        sendGameStart(out);
     }
 
     public void serve(Player player) throws IOException {
         System.out.println(player.socket.getInetAddress());
         DataInputStream in = new DataInputStream(player.socket.getInputStream());
+        DataOutputStream out = new DataOutputStream(player.socket.getOutputStream());
 
         // send a copy of the array to the client when it has just connected
-        sendArray(new DataOutputStream(player.socket.getOutputStream()));
-        sendLevel(new DataOutputStream(player.socket.getOutputStream()));
+        sendArray(out);
+        sendLevel(out);
+
+        // Send initial turn notification (e.g., assuming the game has started)
+        sendTurnNotification(out, false); // Initially, the player cannot move
+        sendMoveCountNotification(out, 0); // No moves left initially
+
+        movesLeft = 0;
+        currentPlayer = null;
 
         while(true){
             String message = in.readUTF();
+
             if(message.equals("Game Start")){
                 gameStart = true;
 
-                for(Player p : clientList){
-                    sendGameStart(new DataOutputStream(p.socket.getOutputStream()));
+                synchronized (clientList) { // Ensure that the clientList is accessed in a thread-safe manner
+                    for (Player p : clientList) {
+                        DataOutputStream pOut = new DataOutputStream(p.socket.getOutputStream());
+                        sendGameStart(pOut);
+                        boolean isFirstPlayer = clientList.indexOf(p) == 0;
+                        sendTurnNotification(pOut, isFirstPlayer); // First player can move
+                        sendMoveCountNotification(pOut, isFirstPlayer ? 4 : 0); // First player has 4 moves
+                        if (isFirstPlayer) {
+                            currentPlayer = p;
+                            movesLeft = 4;
+                        }
+                    }
+
+                    for(Player p : clientList){
+                        sendCurrentPlayer(new DataOutputStream(p.socket.getOutputStream()));
+                    }
                 }
-            }else{
-                player.name = message;
+            }else if(message.equals("Player Name")){
+                player.name = in.readUTF();
+                System.out.println("Player name set to: " + player.name);
+            }else if(message.equals("Move Merge")){
+//                player.name = message;
                 System.out.print(player.name + ": ");
                 char dir = (char) in.read();
                 System.out.println(dir);
+                System.out.println(currentPlayer);
 
-                synchronized (clientList){ /// lock the client list, other thread will wait outside the zone
-                    moveMerge("" + dir, player);
+                if(player.equals(currentPlayer)){
+                    for(Player p : clientList){
+                        sendCurrentPlayer(new DataOutputStream(p.socket.getOutputStream()));
+                    }
+                    synchronized (clientList){ /// lock the client list, other thread will wait outside the zone
+                        moveMerge("" + dir, player);
 
-                    sendScore(new DataOutputStream(player.socket.getOutputStream()), player);
-                    sendLevel(new DataOutputStream(player.socket.getOutputStream()));
-                    sendCombo(new DataOutputStream(player.socket.getOutputStream()));
-                    sendMove(new DataOutputStream(player.socket.getOutputStream()), player);
-
-                    for(Player s : clientList){
-                        DataOutputStream out = new DataOutputStream(s.socket.getOutputStream());
-                        out.write(dir);
-                        out.flush();
-                        //DO NOT CLOSE the socket or the output stream
-
-                        //send the array to the client
-                        sendArray(out);
+                        sendScore(out, player);
                         sendLevel(out);
-                        sendGameOver(out);
+                        sendCombo(out);
+                        sendMove(out, player);
+
+                        for(Player s : clientList){
+                            DataOutputStream sOut = new DataOutputStream(s.socket.getOutputStream());
+                            sOut.write(dir);
+                            sOut.flush();
+                            //DO NOT CLOSE the socket or the output stream
+
+                            //send the array to the client
+                            sendArray(sOut);
+                            sendLevel(sOut);
+                            sendGameOver(sOut);
+                        }
+
+                        movesLeft--;
+
+                        if (movesLeft == 0) {
+                            // Notify the current player that their turn is over
+                            sendTurnNotification(out, false);
+                            sendMoveCountNotification(out, 0);
+
+                            // Notify the next player that it's their turn
+                            int currentPlayerIndex = clientList.indexOf(currentPlayer);
+                            int nextPlayerIndex = (currentPlayerIndex + 1) % clientList.size();
+                            currentPlayer = clientList.get(nextPlayerIndex);
+                            movesLeft = 4;
+
+                            DataOutputStream nextOut = new DataOutputStream(currentPlayer.socket.getOutputStream());
+                            sendTurnNotification(nextOut, true);
+                            sendMoveCountNotification(nextOut, movesLeft);
+
+                            for(Player p : clientList){
+                                sendCurrentPlayer(new DataOutputStream(p.socket.getOutputStream()));
+                            }
+                        } else {
+                            sendMoveCountNotification(out, movesLeft);
+                        }
                     }
                 }
             }
@@ -115,10 +211,39 @@ public class JokerServer {
         }
     }
 
+    void sendWinner(DataOutputStream out, Player p) throws IOException {
+        out.write('W');
+        out.writeUTF(p.name);
+        out.writeInt(p.score);
+        out.writeInt(p.level);
+        out.writeInt(p.totalMoveCount);
+        out.flush();
+    }
+    void sendCurrentPlayer(DataOutputStream out) throws IOException {
+        out.write('Z');
+        out.writeUTF(currentPlayer.name);
+        out.flush();
+    }
+    void sendTurnNotification(DataOutputStream out,boolean canMove) throws IOException {
+        out.write('Y');
+        if(canMove){
+            out.writeInt(1);
+        }else{
+            out.writeInt(0);
+        }
+        out.flush();
+    }
+    void sendMoveCountNotification(DataOutputStream out, int movesLeft) throws IOException {
+        out.write('N');
+        out.writeInt(movesLeft);
+        out.flush();
+    }
     void sendGameStart(DataOutputStream out) throws IOException {
         out.write('T');
         if(gameStart){
             out.writeInt(1);
+        }else{
+            out.writeInt(0);
         }
         out.flush();
     }
@@ -136,7 +261,6 @@ public class JokerServer {
         }
         out.flush();
     }
-
     void sendScore(DataOutputStream out, Player player) throws IOException{
         out.write('S');
         out.writeInt(player.score);
@@ -308,11 +432,28 @@ public class JokerServer {
                         for(Player p : clientList){
                             putScore(p.name, p.score, p.level);
                         }
+                        Winner();
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
             }
+        }
+    }
+
+    private void Winner() throws IOException {
+        int winner = 0;
+        Player winPlayer = null;
+        for (Player p : clientList) {
+            if(p.score > winner){
+                winner = p.score;
+                winPlayer = p;
+            }
+        }
+
+        for(Player p : clientList){
+            DataOutputStream out = new DataOutputStream(p.socket.getOutputStream());
+            sendWinner(out, winPlayer);
         }
     }
 

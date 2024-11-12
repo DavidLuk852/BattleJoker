@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<VBox alignment="CENTER" prefHeight="500.0" prefWidth="500.0" spacing="10" xmlns="http://javafx.com/javafx/18"
+      xmlns:fx="http://javafx.com/fxml/1">
+    <Label>
+        The Game Is Full! Do you want to wait for the next game or leave?
+    </Label>
+    <HBox alignment="CENTER" spacing="10">
+        <Button fx:id="waitButton" text="Wait">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+        <Button fx:id="leaveButton" text="Leave">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+    </HBox>
+</VBox>
