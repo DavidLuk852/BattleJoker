@@ -62,6 +62,7 @@ public class GameWindow {
     AnimationTimer animationTimer;
     AnimationTimer gameStartTimer;
     AnimationTimer moveCheckTimer;
+    AnimationTimer newGameTimer;
 
     final String imagePath = "images/";
     final String[] symbols = {"bg", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "Joker"};
@@ -107,7 +108,7 @@ public class GameWindow {
             if(!gameEngine.getGameStarted()) {
                 waitGameStart();
             }else{
-                new gameFullWindow(gameEngine);
+                waitNewGame();
             }
         }else if (gameEngine.getPlayerCount() == 4) {
             if(!gameEngine.getGameStarted()) {
@@ -116,10 +117,10 @@ public class GameWindow {
                 initCanvas();
                 gameStart();
             }else{
-                new gameFullWindow(gameEngine);
+                waitNewGame();
             }
         } else if (gameEngine.getPlayerCount() >= 5 || gameEngine.getGameStarted()) {
-            new gameFullWindow(gameEngine);
+            waitNewGame();
         }
     }
 
@@ -149,6 +150,22 @@ public class GameWindow {
         gameStartTimer.start(); // Start the timer after it's initialized
     }
 
+    private void waitNewGame() throws IOException {
+        new gameFullWindow(gameEngine);
+
+        newGameTimer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                if(gameEngine.getNewGame() == 1){
+                    Platform.runLater(() -> {
+                        waitGameStart();
+                        newGameTimer.stop(); // Stop the timer once the game starts
+                    });
+                }
+            }
+        };
+        newGameTimer.start();
+    }
     private void updatePlayerNumber() {
         numberofPlayerLabel.setText("Number of Players: " + gameEngine.getPlayerCount());
     }
@@ -170,14 +187,14 @@ public class GameWindow {
          moveCheckTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                if (gameEngine.getCanMove() == 1) {
+                if (gameEngine.getCanMove() == 1 && !gameEngine.isGameOver()) {
                     updateCurrentPlayer();
                     // Set the event handler if the player can move
                     canvas.setOnKeyPressed(event -> {
                         try {
                             gameEngine.moveMerge(event.getCode().toString());
-                            scoreLabel.setText("Score: " + gameEngine.getScore());
-                            levelLabel.setText("Level: " + gameEngine.getLevel());
+//                            scoreLabel.setText("Score: " + gameEngine.getScore());
+//                            levelLabel.setText("Level: " + gameEngine.getLevel());
                             // comboLabel.setText("Combo: " + gameEngine.getCombo());
                             // moveCountLabel.setText("# of Moves: " + gameEngine.getMoveCount());
                         } catch (IOException ex) {

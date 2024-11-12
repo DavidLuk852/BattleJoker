@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 public class JokerServer {
@@ -18,7 +20,9 @@ public class JokerServer {
     static Connection conn;
 
     ArrayList<Player> clientList = new ArrayList<>();
+    ArrayList<Player> waitingClientList = new ArrayList<>();
 
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
     public static final int LIMIT = 14;
     public static final int SIZE = 4;
     final int[] board = new int[SIZE * SIZE];
@@ -84,18 +88,6 @@ public class JokerServer {
                 });
                 childThread.start();
             }
-//            Thread childThread = new Thread(()->{
-//                try{
-//                    serve(player);
-//                } catch(IOException ex){
-//                    ex.printStackTrace();
-//                }
-//
-//                synchronized (clientList){
-//                    clientList.remove(player);
-//                }
-//            });
-//            childThread.start();
         }
     }
 
@@ -106,6 +98,13 @@ public class JokerServer {
 
         sendPlayer(out);
         sendGameStart(out);
+
+        while(true){
+            if(in.read() == 'W') {
+                System.out.println(player.socket.getInetAddress() + " is waiting!");
+                waitingClientList.add(player);
+            }
+        }
     }
 
     public void serve(Player player) throws IOException {
@@ -124,7 +123,7 @@ public class JokerServer {
         movesLeft = 0;
         currentPlayer = null;
 
-        while(true){
+        while(!gameOver){
             String message = in.readUTF();
 
             if(message.equals("Game Start")){
@@ -151,11 +150,9 @@ public class JokerServer {
                 player.name = in.readUTF();
                 System.out.println("Player name set to: " + player.name);
             }else if(message.equals("Move Merge")){
-//                player.name = message;
                 System.out.print(player.name + ": ");
                 char dir = (char) in.read();
                 System.out.println(dir);
-                System.out.println(currentPlayer);
 
                 if(player.equals(currentPlayer)){
                     for(Player p : clientList){
@@ -178,7 +175,7 @@ public class JokerServer {
                             //send the array to the client
                             sendArray(sOut);
                             sendLevel(sOut);
-                            sendGameOver(sOut);
+//                            sendGameOver(sOut);
                         }
 
                         movesLeft--;
@@ -207,8 +204,9 @@ public class JokerServer {
                     }
                 }
             }
-//            nextRound();
         }
+        resetGame();
+        StartNewGame();
     }
 
     void sendWinner(DataOutputStream out, Player p) throws IOException {
@@ -266,25 +264,21 @@ public class JokerServer {
         out.writeInt(player.score);
         out.flush();
     }
-
     void sendLevel(DataOutputStream out) throws IOException{
         out.write('l');
         out.writeInt(level);
         out.flush();
     }
-
     void sendCombo(DataOutputStream out) throws IOException{
         out.write('C');
         out.writeInt(combo);
         out.flush();
     }
-
     void sendMove(DataOutputStream out, Player player) throws IOException{
         out.write('M');
         out.writeInt(player.totalMoveCount);
         out.flush();
     }
-
     void sendGameOver(DataOutputStream out) throws IOException{
         out.write('G');
         if(gameOver){
@@ -292,6 +286,11 @@ public class JokerServer {
         }else{
             out.writeInt(0);
         }
+        out.flush();
+    }
+    void sendNewGame(DataOutputStream out) throws IOException{
+        out.write('E');
+        out.writeInt(1);
         out.flush();
     }
 
@@ -368,43 +367,15 @@ public class JokerServer {
                 board[j] = v;
                 if (v > level) {
                     level = v;
-                    player.level = v;
+                    for(Player p : clientList){
+                        p.level = v;
+                    }
                 }
             }
             if (i != j)
                 numOfTilesMoved++;
 
         }
-    }
-
-    public int getValue(int r, int c) {
-        synchronized (board) {
-            return board[r * SIZE + c];
-        }
-    }
-
-    public boolean isGameOver() {
-        return gameOver;
-    }
-
-    public void setPlayerName(String name) {
-        playerName = name;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public int getCombo() {
-        return combo;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public int getMoveCount() {
-        return totalMoveCount;
     }
 
     public void moveMerge(String dir, Player player){
@@ -431,6 +402,7 @@ public class JokerServer {
                         connect();
                         for(Player p : clientList){
                             putScore(p.name, p.score, p.level);
+                            sendGameOver(new DataOutputStream(p.socket.getOutputStream()));
                         }
                         Winner();
                     } catch (Exception ex) {
@@ -454,6 +426,61 @@ public class JokerServer {
         for(Player p : clientList){
             DataOutputStream out = new DataOutputStream(p.socket.getOutputStream());
             sendWinner(out, winPlayer);
+        }
+    }
+
+    public void resetGame() {
+        // Resetting the board
+        for (int i = 0; i < board.length; i++) {
+            board[i] = 0;
+        }
+
+        board[11] = 1;
+
+        // Resetting other variables
+        combo = 0;
+        numOfTilesMoved = 0;
+        gameOver = false;
+        gameStart = false;
+        level = 1;
+        playerName = null; // or "" if you prefer an empty string
+        currentPlayer = null;
+        movesLeft = 0;
+
+        clientList.clear();
+    }
+
+    private void StartNewGame() throws IOException {
+        synchronized (waitingClientList) {
+            if (waitingClientList.size() > 0) {
+                for (Player p : new ArrayList<>(waitingClientList)) {
+                    synchronized (clientList) {
+                        clientList.add(p);
+                    }
+
+                    try {
+                        DataOutputStream playerOutStream = new DataOutputStream(p.socket.getOutputStream());
+                        sendPlayer(playerOutStream);
+                        sendGameStart(playerOutStream);
+                        sendNewGame(playerOutStream);
+                    } catch (IOException e) {
+                        e.printStackTrace(); // Handle the exception as needed
+                    }
+
+                    executor.execute(() -> {
+                        try {
+                            serve(p);
+                        } catch (IOException ex) {
+                            ex.printStackTrace(); // Handle the exception as needed
+                        } finally {
+                            synchronized (clientList) {
+                                clientList.remove(p);
+                            }
+                        }
+                    });
+                }
+                waitingClientList.clear(); // Clear the list after processing
+            }
         }
     }
 
