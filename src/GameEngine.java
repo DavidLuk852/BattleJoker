@@ -11,6 +11,10 @@ import java.sql.SQLOutput;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import javax.xml.crypto.Data;
+import java.io.*;
+import java.net.Socket;
+
 
 public class GameEngine {
     public static final int SIZE = 4;
@@ -300,6 +304,137 @@ public class GameEngine {
         long elapsedTime = System.currentTimeMillis() - startTime;
         return elapsedTime / 1000.0;  // Convert milliseconds to seconds
     }
+
+    public void savePuzzle(File file) throws IOException {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
+            synchronized (board) {
+                out.writeInt(SIZE);
+                for (int value : board) {
+                    out.writeInt(value);
+                }
+                out.writeInt(level);
+                out.writeInt(score);
+                out.writeInt(combo);
+                out.writeInt(totalMoveCount);
+                out.writeBoolean(gameOver);
+                out.writeInt(playerCount);
+                out.writeBoolean(gameStarted);
+                out.writeUTF(currentPlayer);
+            }
+        }
+    }
+
+    public void loadPuzzle(File file) throws IOException {
+        try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
+            synchronized (board) {
+                int newSize = in.readInt();
+                if (newSize != SIZE) {
+                    throw new IOException("Invalid puzzle size");
+                }
+                for (int i = 0; i < board.length; i++) {
+                    board[i] = in.readInt();
+                }
+                level = in.readInt();
+                score = in.readInt();
+                combo = in.readInt();
+                totalMoveCount = in.readInt();
+                gameOver = in.readBoolean();
+                playerCount = in.readInt();
+                gameStarted = in.readBoolean();
+                currentPlayer = in.readUTF();
+            }
+            updateGameState();
+        }
+    }
+
+    private void updateGameState() {
+        updateBoard();
+        updateScore();
+        updateLevel();
+        updateCombo();
+        updateMoveCount();
+        updateGameOver();
+        updatePlayerCount();
+        updateGameStarted();
+        updateCurrentPlayer();
+    }
+
+    private void updateBoard() {
+
+        System.out.println("Board updated:");
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                System.out.print(getValue(i, j) + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    private void updateScore() {
+        System.out.println("Score updated: " + score);
+    }
+
+    private void updateLevel() {
+        System.out.println("Level updated: " + level);
+    }
+
+    private void updateCombo() {
+        // 更新連擊數的界面
+        // updateComboUI(combo);
+        System.out.println("Combo updated: " + combo);
+    }
+
+    private void updateMoveCount() {
+        // 更新移動次數的界面
+        // updateMoveCountUI(totalMoveCount);
+        System.out.println("Move count updated: " + totalMoveCount);
+    }
+
+    private void updateGameOver() {
+        // 更新遊戲結束狀態的界面
+        // updateGameOverUI(gameOver);
+        System.out.println("Game over status updated: " + gameOver);
+    }
+
+    private void updatePlayerCount() {
+        // 更新玩家數量的界面
+        // updatePlayerCountUI(playerCount);
+        System.out.println("Player count updated: " + playerCount);
+    }
+
+    private void updateGameStarted() {
+        // 更新遊戲開始狀態的界面
+        // updateGameStartedUI(gameStarted);
+        System.out.println("Game started status updated: " + gameStarted);
+    }
+
+    private void updateCurrentPlayer() {
+        // 更新當前玩家的界面
+        // updateCurrentPlayerUI(currentPlayer);
+        System.out.println("Current player updated: " + currentPlayer);
+    }
+
+
+    public void uploadPuzzleToServer(File file) throws IOException {
+        try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
+            out.writeUTF("Upload Puzzle");
+            out.writeInt(SIZE);
+            for (int value : board) {
+                out.writeInt(value);
+            }
+            out.writeInt(level);
+            out.writeInt(score);
+            out.writeInt(combo);
+            out.writeInt(totalMoveCount);
+            out.writeBoolean(gameOver);
+            out.writeInt(playerCount);
+            out.writeBoolean(gameStarted);
+            out.writeUTF(currentPlayer);
+            out.flush();
+        }
+    }
+
+
 }
 
 

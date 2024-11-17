@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.text.Font?>
 
 <?import javafx.scene.control.Button?>
@@ -41,4 +44,17 @@
             <Font size="15.0"/>
         </font>
     </Button>
+    <Button fx:id="saveButton" text="Save Game">
+        <font>
+            <Font size="15.0"/>
+        </font>
+    </Button>
+    <Button fx:id="loadButton" text="Load Game">
+        <font>
+            <Font size="15.0"/>
+        </font>
+    </Button>
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
 </VBox>

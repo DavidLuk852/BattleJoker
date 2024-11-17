@@ -19,6 +19,8 @@
         </Menu>
         <Menu mnemonicParsing="false" text="Help">
             <MenuItem fx:id="mnuAbout" mnemonicParsing="false" text="About..." />
+            <MenuItem fx:id="saveMenuItem" text="Save Game" />
+            <MenuItem fx:id="loadMenuItem" text="Load Game" />
         </Menu>
     </MenuBar>
     <HBox style="-fx-background-color: #a88;">

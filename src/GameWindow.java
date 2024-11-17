@@ -8,19 +8,16 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuBar;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class GameWindow {
     @FXML
@@ -55,8 +52,16 @@ public class GameWindow {
 
     @FXML
     Label timerLabel;
+
     @FXML
     Button goButton;
+
+    @FXML
+    MenuItem saveMenuItem;
+
+    @FXML
+    MenuItem loadMenuItem;
+
     long startTime;
     Stage stage;
     AnimationTimer animationTimer;
@@ -75,6 +80,10 @@ public class GameWindow {
         gameEngine = GameEngine.getInstance(ip, port);
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("mainUI.fxml"));
+        if (loader.getLocation() == null) {
+            throw new IOException("FXML file not found");
+        }
+
         loader.setController(this);
         Parent root = loader.load();
         Scene scene = new Scene(root);
@@ -90,6 +99,8 @@ public class GameWindow {
         stage.heightProperty().addListener(h -> onHeightChangedWindow(((ReadOnlyDoubleProperty) h).getValue()));
         stage.setOnCloseRequest(event -> quit());
 
+        saveMenuItem.setOnAction(event -> savePuzzle());
+        loadMenuItem.setOnAction(event -> loadPuzzle());
 
         stage.show();
 
@@ -104,23 +115,52 @@ public class GameWindow {
                 }
             });
             waitGameStart();
-        }else if (gameEngine.getPlayerCount() == 2 || gameEngine.getPlayerCount() == 3) {
-            if(!gameEngine.getGameStarted()) {
+        } else if (gameEngine.getPlayerCount() == 2 || gameEngine.getPlayerCount() == 3) {
+            if (!gameEngine.getGameStarted()) {
                 waitGameStart();
-            }else{
+            } else {
                 waitNewGame();
             }
-        }else if (gameEngine.getPlayerCount() == 4) {
-            if(!gameEngine.getGameStarted()) {
+        } else if (gameEngine.getPlayerCount() == 4) {
+            if (!gameEngine.getGameStarted()) {
                 numberofPlayerLabel.setText("Number of Players: " + gameEngine.getPlayerCount());
                 gameEngine.setGameStarted(true);
                 initCanvas();
                 gameStart();
-            }else{
+            } else {
                 waitNewGame();
             }
         } else if (gameEngine.getPlayerCount() >= 5 || gameEngine.getGameStarted()) {
             waitNewGame();
+        }
+    }
+
+    private void savePuzzle() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Puzzle");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Puzzle Files", "*.pzl"));
+        File file = fileChooser.showSaveDialog(stage);
+        if (file != null) {
+            try {
+                gameEngine.savePuzzle(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void loadPuzzle() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Load Puzzle");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Puzzle Files", "*.pzl"));
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            try {
+                gameEngine.loadPuzzle(file);
+                gameEngine.uploadPuzzleToServer(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -156,7 +196,7 @@ public class GameWindow {
         newGameTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                if(gameEngine.getNewGame() == 1){
+                if (gameEngine.getNewGame() == 1) {
                     Platform.runLater(() -> {
                         waitGameStart();
                         newGameTimer.stop(); // Stop the timer once the game starts
@@ -166,6 +206,7 @@ public class GameWindow {
         };
         newGameTimer.start();
     }
+
     private void updatePlayerNumber() {
         numberofPlayerLabel.setText("Number of Players: " + gameEngine.getPlayerCount());
     }
@@ -184,7 +225,7 @@ public class GameWindow {
 
     private void initCanvas() {
         // Create an AnimationTimer to periodically check gameEngine.getCanMove()
-         moveCheckTimer = new AnimationTimer() {
+        moveCheckTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 if (gameEngine.getCanMove() == 1 && !gameEngine.isGameOver()) {
@@ -193,8 +234,8 @@ public class GameWindow {
                     canvas.setOnKeyPressed(event -> {
                         try {
                             gameEngine.moveMerge(event.getCode().toString());
-//                            scoreLabel.setText("Score: " + gameEngine.getScore());
-//                            levelLabel.setText("Level: " + gameEngine.getLevel());
+                            // scoreLabel.setText("Score: " + gameEngine.getScore());
+                            // levelLabel.setText("Level: " + gameEngine.getLevel());
                             // comboLabel.setText("Combo: " + gameEngine.getCombo());
                             // moveCountLabel.setText("# of Moves: " + gameEngine.getMoveCount());
                         } catch (IOException ex) {
@@ -208,7 +249,6 @@ public class GameWindow {
                 }
             }
         };
-
 
         animationTimer = new AnimationTimer() {
             @Override
@@ -226,14 +266,13 @@ public class GameWindow {
                             throw new RuntimeException(ex);
                         }
                     });
-
                 }
             }
         };
         canvas.requestFocus();
     }
 
-    private void updateCurrentPlayer(){
+    private void updateCurrentPlayer() {
         currentPlayerLabel.setText("Current Player: " + gameEngine.getCurrentPlayer());
     }
 
@@ -244,7 +283,6 @@ public class GameWindow {
     }
 
     private void render() {
-
         double w = canvas.getWidth();
         double h = canvas.getHeight();
 

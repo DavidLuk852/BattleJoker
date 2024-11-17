@@ -1,5 +1,3 @@
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -34,9 +32,11 @@ public class JokerServer {
     private int totalMoveCount;
     private boolean gameOver;
     private boolean gameStart;
+    private boolean gameStarted;
     private int level = 1;
     private String playerName;
     private Player currentPlayer;
+    private int playerCount;
     private int movesLeft;
 
     public JokerServer(int port) throws IOException {
@@ -126,7 +126,14 @@ public class JokerServer {
         while(!gameOver){
             String message = in.readUTF();
 
-            if(message.equals("Game Start")){
+            if (message.equals("Upload Puzzle")) {
+                loadPuzzleFromStream(in);
+                for (Player p : clientList) {
+                    DataOutputStream pOut = new DataOutputStream(p.socket.getOutputStream());
+                    sendArray(pOut);
+                    sendLevel(pOut);
+                }
+            } else if (message.equals("Game Start")) {
                 gameStart = true;
 
                 synchronized (clientList) { // Ensure that the clientList is accessed in a thread-safe manner
@@ -207,6 +214,35 @@ public class JokerServer {
         }
         resetGame();
         StartNewGame();
+    }
+
+    private void loadPuzzleFromStream(DataInputStream in) throws IOException {
+        synchronized (board) {
+            int newSize = in.readInt();
+            if (newSize != SIZE) {
+                throw new IOException("Invalid puzzle size");
+            }
+            for (int i = 0; i < board.length; i++) {
+                board[i] = in.readInt();
+            }
+            level = in.readInt();
+            score = in.readInt();
+            combo = in.readInt();
+            totalMoveCount = in.readInt();
+            gameOver = in.readBoolean();
+            playerCount = in.readInt();
+            gameStarted = in.readBoolean();
+            currentPlayer = findPlayerByName(in.readUTF());
+        }
+    }
+
+    private Player findPlayerByName(String name) {
+        for (Player p : clientList) {
+            if (p.name.equals(name)) {
+                return p;
+            }
+        }
+        return null;
     }
 
     void sendWinner(DataOutputStream out, Player p) throws IOException {
