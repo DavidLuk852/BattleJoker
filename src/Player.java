@@ -15,35 +15,4 @@ public class Player {
         this.level = level;
     }
 
-    public void setSocket(Socket socket){
-        this.socket = socket;
-    }
-
-    public Socket getSocket(){
-        return socket;
-    }
-
-    public void setName(String name){
-        this.name = name;
-    }
-
-    public String getName(){
-        return name;
-    }
-
-    public void setScore(int score){
-        this.score = score;
-    }
-
-    public int getScore(){
-        return score;
-    }
-
-    public void setTotalMoveCount(int totalMoveCount){
-        this.totalMoveCount = totalMoveCount;
-    }
-
-    public int getTotalMoveCount(){
-        return totalMoveCount;
-    }
 }
