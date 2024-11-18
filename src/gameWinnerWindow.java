@@ -49,7 +49,7 @@ public class gameWinnerWindow {
         winnerScoreLabel.setText("Score: " + gameEngine.getWinnerScore());
         winnerLevelLabel.setText("Level: " + gameEngine.getWinnerLevel());
         winnerMoveCountLabel.setText("Total Moves: " + gameEngine.getWinnerMoveCount());
-        Time.setText("Total time for the game: " + gameEngine.getElapsedTime());
+        Time.setText("Total time for the game: " + gameEngine.getElapsedTime() + " s");
 
         stage.showAndWait();
     }
