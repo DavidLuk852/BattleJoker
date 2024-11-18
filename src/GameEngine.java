@@ -30,8 +30,8 @@ public class GameEngine {
     private int totalMoveCount;
     private int playerCount;
     private boolean gameStarted;
-    private long startTime;  // To record when the game starts
-    private boolean timerRunning = false;  // To track if the timer is running
+    public static long startTime;  // To record when the game starts
+    public static boolean timerRunning = false;  // To track if the timer is running
     private int canMove;
     private int moveLeft;
     private String currentPlayer;
@@ -254,10 +254,24 @@ public class GameEngine {
         return totalMoveCount;
     }
 
-    public void startTimer() {
+    public static void startTimer() {
         startTime = System.currentTimeMillis();
         timerRunning = true;
     }
+
+    public  static double getElapsedTime() {
+        if (!timerRunning) {
+            return 0;
+        }
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        return elapsedTime / 1000.0;  // Convert milliseconds to seconds
+    }
+
+    public static void stopTimer() {
+        timerRunning = false;
+    }
+
+
 
     public boolean getGameStarted() {
         return gameStarted;
@@ -293,17 +307,6 @@ public class GameEngine {
         return newGame;
     }
 
-    public void stopTimer() {
-        timerRunning = false;
-    }
-
-    public double getElapsedTime() {
-        if (!timerRunning) {
-            return 0;
-        }
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        return elapsedTime / 1000.0;  // Convert milliseconds to seconds
-    }
 
     public void savePuzzle(File file) throws IOException {
         try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
