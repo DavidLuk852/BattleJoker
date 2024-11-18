@@ -14,6 +14,7 @@
 <?import javafx.scene.control.Button?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.Region?>
 <VBox prefHeight="894.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1">
     <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
         <Menu mnemonicParsing="false" text="Game">
@@ -38,10 +39,10 @@
             <Label fx:id="moveCountLabel" textAlignment="CENTER"># of Moves: 0</Label>
             <Label fx:id="timerLabel" textAlignment="CENTER">Time: 0.00 s</Label> <!-- New timer label -->
             <Label fx:id="numberofPlayerLabel" textAlignment="CENTER">Number of Players: 0</Label>
-            <Label fx:id="currentPlayerLabel" textAlignment="CENTER">Current Player: --</Label>
-         <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-         </padding>
+            <Label fx:id="currentPlayerLabel" textAlignment="CENTER" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: red;">Current Player: --</Label>
+             <padding>
+                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+             </padding>
         </VBox>
         <Button fx:id="goButton" text="Start Game!" visible="false" disable="true">
             <font>
