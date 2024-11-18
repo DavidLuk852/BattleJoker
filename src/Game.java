@@ -87,7 +87,14 @@ public class Game {
         while (!gameOver) {
             String message = in.readUTF();
 
-            if (message.equals("Game Start")) {
+            if (message.equals("Upload Puzzle")) {
+                loadPuzzleFromStream(in);
+                for (Player p : clientList) {
+                    DataOutputStream pOut = new DataOutputStream(p.socket.getOutputStream());
+                    sendArray(pOut);
+                    sendLevel(pOut);
+                }
+            }else if (message.equals("Game Start")) {
                 startGame();
             } else if (message.equals("Player Name")) {
                 player.name = in.readUTF();
@@ -149,8 +156,38 @@ public class Game {
             }
         }
         resetGame();
-        JokerServer.startNewGameForPlayer(player);
+//        JokerServer.startNewGameForPlayer(player);
     }
+
+        private void loadPuzzleFromStream(DataInputStream in) throws IOException {
+        synchronized (board) {
+            int newSize = in.readInt();
+            if (newSize != SIZE) {
+                throw new IOException("Invalid puzzle size");
+            }
+            for (int i = 0; i < board.length; i++) {
+                board[i] = in.readInt();
+            }
+            level = in.readInt();
+            score = in.readInt();
+            combo = in.readInt();
+            totalMoveCount = in.readInt();
+            gameOver = in.readBoolean();
+            playerCount = in.readInt();
+            gameStarted = in.readBoolean();
+            currentPlayer = findPlayerByName(in.readUTF());
+        }
+    }
+
+    private Player findPlayerByName(String name) {
+        for (Player p : clientList) {
+            if (p.name.equals(name)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
 
     private boolean nextRound() {
         if (isFull()) return false;
