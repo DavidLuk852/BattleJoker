@@ -10,6 +10,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import javafx.scene.paint.Color; // Add this import
 
 public class GameWindow {
     @FXML
@@ -62,6 +64,9 @@ public class GameWindow {
     @FXML
     MenuItem loadMenuItem;
 
+    @FXML
+    MenuItem changeColorMenuItem;
+
     long startTime;
     Stage stage;
     AnimationTimer animationTimer;
@@ -101,6 +106,7 @@ public class GameWindow {
 
         saveMenuItem.setOnAction(event -> savePuzzle());
         loadMenuItem.setOnAction(event -> loadPuzzle());
+        changeColorMenuItem.setOnAction(event -> changeWindowColor()); // Set action for color change
 
         stage.show();
 
@@ -134,6 +140,30 @@ public class GameWindow {
             waitNewGame();
         }
     }
+
+    private void changeWindowColor() {
+        // Generate random RGB values
+        double red = Math.random();
+        double green = Math.random();
+        double blue = Math.random();
+
+        // Set the background color of the VBox
+        nameLabel.getParent().setStyle(String.format("-fx-background-color: rgb(%.0f, %.0f, %.0f);",
+                red * 255, green * 255, blue * 255));
+
+        // Set the background color of the HBox
+        ((HBox) nameLabel.getParent().getParent()).setStyle(String.format("-fx-background-color: rgb(%.0f, %.0f, %.0f);",
+                red * 255, green*  255, blue * 255));
+
+        // Set the background color of the Pane (boardPane)
+        boardPane.setStyle(String.format("-fx-background-color: rgb(%.0f, %.0f, %.0f);",
+                red * 255, green  *255, blue * 255));
+
+        // Set the background color of the Scene
+        Scene scene = stage.getScene();
+        scene.setFill(Color.rgb((int)(red*  255), (int)(green * 255), (int)(blue * 255)));
+    }
+
 
     private void savePuzzle() {
         FileChooser fileChooser = new FileChooser();
