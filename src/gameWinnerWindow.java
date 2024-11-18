@@ -27,6 +27,8 @@ public class gameWinnerWindow {
     @FXML
     Label winnerMoveCountLabel;
     @FXML
+    Label TimeLabel;
+    @FXML
     Button goButton;
 
     public gameWinnerWindow(GameEngine gameEngine) throws IOException {
@@ -47,6 +49,7 @@ public class gameWinnerWindow {
         winnerScoreLabel.setText("Score: " + gameEngine.getWinnerScore());
         winnerLevelLabel.setText("Level: " + gameEngine.getWinnerLevel());
         winnerMoveCountLabel.setText("Total Moves: " + gameEngine.getWinnerMoveCount());
+        TimeLabel.setText("Total time for the game: " + gameEngine.getElapsedTime());
 
         stage.showAndWait();
     }

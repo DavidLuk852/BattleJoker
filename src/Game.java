@@ -94,7 +94,7 @@ public class Game {
                     sendArray(pOut);
                     sendLevel(pOut);
                 }
-            }else if (message.equals("Game Start")) {
+            } else if (message.equals("Game Start")) {
                 startGame();
             } else if (message.equals("Player Name")) {
                 player.name = in.readUTF();
