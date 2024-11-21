@@ -40,6 +40,8 @@ public class GameEngine {
     private int WinnerLevel;
     private int WinnerMoves;
     private int newGame;
+    private String updatePlayer;
+    private boolean update = false;
 
     Socket clientSocket;
     DataOutputStream out;
@@ -92,6 +94,9 @@ public class GameEngine {
                     case 'E':
                         receiveNewGame(in);
                         break;
+                    case 'K':
+                        receiveUpdatePuzzle(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -101,6 +106,11 @@ public class GameEngine {
             ex.printStackTrace(); ///debugging only, remove it before production
         }
     });
+
+    void receiveUpdatePuzzle(DataInputStream in) throws IOException {
+        updatePlayer = in.readUTF();
+        update = true;
+    }
 
     void receiveNewGame(DataInputStream in) throws IOException {
         newGame = in.readInt();
@@ -234,6 +244,20 @@ public class GameEngine {
         out.flush();
     }
 
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public String getUpdatePlayer(){
+        return updatePlayer;
+    }
+
+    public boolean getUpdate(){
+        return update;
+    }
+    public void setUpdate(){
+        this.update = false;
+    }
     public String getCurrentPlayer() {
         return currentPlayer;
     }
@@ -315,6 +339,7 @@ public class GameEngine {
                 for (int value : board) {
                     out.writeInt(value);
                 }
+                out.writeUTF(currentPlayer);
                 out.writeInt(level);
                 out.writeInt(score);
                 out.writeInt(combo);
@@ -322,7 +347,6 @@ public class GameEngine {
                 out.writeBoolean(gameOver);
                 out.writeInt(playerCount);
                 out.writeBoolean(gameStarted);
-                out.writeUTF(currentPlayer);
             }
         }
     }
@@ -337,6 +361,7 @@ public class GameEngine {
                 for (int i = 0; i < board.length; i++) {
                     board[i] = in.readInt();
                 }
+                currentPlayer = in.readUTF();
                 level = in.readInt();
                 score = in.readInt();
                 combo = in.readInt();
@@ -344,13 +369,13 @@ public class GameEngine {
                 gameOver = in.readBoolean();
                 playerCount = in.readInt();
                 gameStarted = in.readBoolean();
-                currentPlayer = in.readUTF();
             }
             updateGameState();
         }
     }
 
     private void updateGameState() {
+        updateCurrentPlayer();
         updateBoard();
         updateScore();
         updateLevel();
@@ -359,7 +384,6 @@ public class GameEngine {
         updateGameOver();
         updatePlayerCount();
         updateGameStarted();
-        updateCurrentPlayer();
     }
 
     private void updateBoard() {
@@ -425,6 +449,7 @@ public class GameEngine {
             for (int value : board) {
                 out.writeInt(value);
             }
+            out.writeUTF(currentPlayer);
             out.writeInt(level);
             out.writeInt(score);
             out.writeInt(combo);
@@ -432,7 +457,6 @@ public class GameEngine {
             out.writeBoolean(gameOver);
             out.writeInt(playerCount);
             out.writeBoolean(gameStarted);
-            out.writeUTF(currentPlayer);
             out.flush();
         }
     }

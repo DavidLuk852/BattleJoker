@@ -60,33 +60,11 @@ public class JokerServer {
 
             Game finalAssignedGame = assignedGame;
             executor.execute(() -> {
-                try {
-                    finalAssignedGame.serve(player);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
+                finalAssignedGame.serve(player);
             });
         }
     }
 
-    public static void startNewGameForPlayer(Player player) throws IOException {
-        Game newGame = new Game();
-        newGame.addPlayer(player);
-        JokerServer server = null;
-        try {
-            server = new JokerServer(12345);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        server.games.add(newGame);
-        server.executor.execute(() -> {
-            try {
-                newGame.serve(player);
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        });
-    }
 
 //    public JokerServer(int port) throws IOException {
 //        actionMap.put("U", this::moveUp);

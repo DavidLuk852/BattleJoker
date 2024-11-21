@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,102 +65,146 @@ public class Game {
         }
     }
 
-    public void serve(Player player) throws IOException {
+    public void serve(Player player) {
         System.out.println(player.socket.getInetAddress());
-        DataInputStream in = new DataInputStream(player.socket.getInputStream());
-        DataOutputStream out = new DataOutputStream(player.socket.getOutputStream());
+        DataInputStream in = null;
+        DataOutputStream out = null;
 
-        // send a copy of the array to the client when it has just connected
-        sendArray(out);
-        sendLevel(out);
+        try {
+            in = new DataInputStream(player.socket.getInputStream());
+            out = new DataOutputStream(player.socket.getOutputStream());
 
-        for(Player p : clientList){
-            sendPlayer(new DataOutputStream(p.socket.getOutputStream()));
-        }
+            // Send initial game state to the client
+            sendArray(out);
+            sendLevel(out);
 
-        // Send initial turn notification (e.g., assuming the game has started)
-        sendTurnNotification(out, false); // Initially, the player cannot move
-        sendMoveCountNotification(out, 0); // No moves left initially
+            for (Player p : clientList) {
+                sendPlayer(new DataOutputStream(p.socket.getOutputStream()));
+            }
 
-        movesLeft = 0;
-        currentPlayer = null;
+            // Send initial turn notification
+            sendTurnNotification(out, false); // Initially, the player cannot move
+            sendMoveCountNotification(out, 0); // No moves left initially
 
-        while (!gameOver) {
-            String message = in.readUTF();
+            movesLeft = 0;
+            currentPlayer = null;
 
-            if (message.equals("Upload Puzzle")) {
-                loadPuzzleFromStream(in);
-                for (Player p : clientList) {
-                    DataOutputStream pOut = new DataOutputStream(p.socket.getOutputStream());
-                    sendArray(pOut);
-                    sendLevel(pOut);
-                }
-            } else if (message.equals("Game Start")) {
-                startGame();
-            } else if (message.equals("Player Name")) {
-                player.name = in.readUTF();
-                System.out.println("Player name set to: " + player.name);
-            } else if (message.equals("Move Merge")) {
-                System.out.print(player.name + ": ");
-                char dir = (char) in.read();
-                System.out.println(dir);
+            while (!gameOver) {
+                String message = in.readUTF();
 
-                if (player.equals(currentPlayer)) {
-                    for (Player p : clientList) {
-                        sendCurrentPlayer(new DataOutputStream(p.socket.getOutputStream()));
-                    }
-                    synchronized (clientList) { // lock the client list, other thread will wait outside the zone
-                        moveMerge("" + dir, player);
-
-                        sendScore(out, player);
-                        sendLevel(out);
-                        sendCombo(out);
-                        sendMove(out, player);
-
-                        for (Player s : clientList) {
-                            DataOutputStream sOut = new DataOutputStream(s.socket.getOutputStream());
-                            sOut.write(dir);
-                            sOut.flush();
-                            //DO NOT CLOSE the socket or the output stream
-
-                            //send the array to the client
-                            sendArray(sOut);
-                            sendLevel(sOut);
-                            // sendGameOver(sOut);
-                        }
-
-                        movesLeft--;
-
-                        if (movesLeft == 0) {
-                            // Notify the current player that their turn is over
-                            sendTurnNotification(out, false);
-                            sendMoveCountNotification(out, 0);
-
-                            // Notify the next player that it's their turn
-                            int currentPlayerIndex = clientList.indexOf(currentPlayer);
-                            int nextPlayerIndex = (currentPlayerIndex + 1) % clientList.size();
-                            currentPlayer = clientList.get(nextPlayerIndex);
-                            movesLeft = 4;
-
-                            DataOutputStream nextOut = new DataOutputStream(currentPlayer.socket.getOutputStream());
-                            sendTurnNotification(nextOut, true);
-                            sendMoveCountNotification(nextOut, movesLeft);
-
+                switch (message) {
+                    case "Upload Puzzle":
+                        loadPuzzleFromStream(in);
+                        synchronized (clientList) {
                             for (Player p : clientList) {
-                                sendCurrentPlayer(new DataOutputStream(p.socket.getOutputStream()));
+                                DataOutputStream pOut = new DataOutputStream(p.socket.getOutputStream());
+                                sendUpdatePuzzle(pOut);
+                                sendArray(pOut);
+                                sendLevel(pOut);
                             }
-                        } else {
-                            sendMoveCountNotification(out, movesLeft);
                         }
-                    }
+                        break;
+
+                    case "Game Start":
+                        startGame();
+                        break;
+
+                    case "Player Name":
+                        player.name = in.readUTF();
+                        System.out.println("Player name set to: " + player.name);
+                        break;
+
+                    case "Move Merge":
+                        handleMoveMerge(player, in, out);
+                        break;
+
+                    default:
+                        System.out.println("Unknown message: " + message);
+                        break;
+                }
+            }
+        } catch (SocketException e) {
+            System.out.println("Connection reset by client: " + player.name);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
+                if (player.socket != null) {
+                    player.socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Remove player from client list and reset game state if needed
+            synchronized (clientList) {
+                clientList.remove(player);
+                if (clientList.isEmpty()) {
+                    resetGame();
                 }
             }
         }
-        resetGame();
-//        JokerServer.startNewGameForPlayer(player);
     }
 
-        private void loadPuzzleFromStream(DataInputStream in) throws IOException {
+    private void handleMoveMerge(Player player, DataInputStream in, DataOutputStream out) throws IOException {
+        System.out.print(player.name + ": ");
+        char dir = (char) in.read();
+        System.out.println(dir);
+
+        if (player.equals(currentPlayer)) {
+            synchronized (clientList) {
+                moveMerge("" + dir, player);
+
+                sendScore(out, player);
+                sendLevel(out);
+                sendCombo(out);
+                sendMove(out, player);
+
+                for (Player s : clientList) {
+                    DataOutputStream sOut = new DataOutputStream(s.socket.getOutputStream());
+                    sOut.write(dir);
+                    sOut.flush();
+                    sendArray(sOut);
+                    sendLevel(sOut);
+                }
+
+                movesLeft--;
+
+                if (movesLeft == 0) {
+                    endTurn(out);
+                } else {
+                    sendMoveCountNotification(out, movesLeft);
+                }
+            }
+        }
+    }
+
+    private void endTurn(DataOutputStream out) throws IOException {
+        sendTurnNotification(out, false);
+        sendMoveCountNotification(out, 0);
+
+        int currentPlayerIndex = clientList.indexOf(currentPlayer);
+        int nextPlayerIndex = (currentPlayerIndex + 1) % clientList.size();
+        currentPlayer = clientList.get(nextPlayerIndex);
+        movesLeft = 4;
+
+        DataOutputStream nextOut = new DataOutputStream(currentPlayer.socket.getOutputStream());
+        sendTurnNotification(nextOut, true);
+        sendMoveCountNotification(nextOut, movesLeft);
+
+        for (Player p : clientList) {
+            sendCurrentPlayer(new DataOutputStream(p.socket.getOutputStream()));
+        }
+    }
+
+
+    private void loadPuzzleFromStream(DataInputStream in) throws IOException {
         synchronized (board) {
             int newSize = in.readInt();
             if (newSize != SIZE) {
@@ -168,14 +213,14 @@ public class Game {
             for (int i = 0; i < board.length; i++) {
                 board[i] = in.readInt();
             }
+            currentPlayer = findPlayerByName(in.readUTF());
             level = in.readInt();
-            score = in.readInt();
+            currentPlayer.score = in.readInt();
             combo = in.readInt();
-            totalMoveCount = in.readInt();
+            currentPlayer.totalMoveCount = in.readInt();
             gameOver = in.readBoolean();
             playerCount = in.readInt();
             gameStarted = in.readBoolean();
-            currentPlayer = findPlayerByName(in.readUTF());
         }
     }
 
@@ -332,6 +377,10 @@ public class Game {
         clientList.clear();
     }
 
+    void sendUpdatePuzzle(DataOutputStream out) throws IOException {
+        out.write('K');
+        out.writeUTF(currentPlayer.name);
+    }
     void sendWinner(DataOutputStream out, Player p) throws IOException {
         out.write('W');
         out.writeUTF(p.name);

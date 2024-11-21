@@ -10,6 +10,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
@@ -67,6 +68,9 @@ public class GameWindow {
     @FXML
     MenuItem changeColorMenuItem;
 
+    @FXML
+    TextArea message;
+
     long startTime;
     Stage stage;
     AnimationTimer animationTimer;
@@ -107,6 +111,9 @@ public class GameWindow {
         saveMenuItem.setOnAction(event -> savePuzzle());
         loadMenuItem.setOnAction(event -> loadPuzzle());
         changeColorMenuItem.setOnAction(event -> changeWindowColor()); // Set action for color change
+        message.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+            event.consume();
+        });
 
         stage.show();
 
@@ -213,6 +220,9 @@ public class GameWindow {
                         initCanvas();
                         gameStart();
                         gameStartTimer.stop(); // Stop the timer once the game starts
+
+                        saveMenuItem.setVisible(true);
+                        loadMenuItem.setVisible(true);
                     });
                 }
             }
@@ -251,6 +261,7 @@ public class GameWindow {
         gameEngine.startTimer();  // Start the timer in GameEngine
         animationTimer.start();
         moveCheckTimer.start();
+        message.appendText("Message: Game Started\n");
     }
 
     private void initCanvas() {
@@ -289,6 +300,8 @@ public class GameWindow {
                 if (gameEngine.isGameOver()) {
                     System.out.println("Game Over!");
                     animationTimer.stop();
+                    saveMenuItem.setVisible(false);
+                    loadMenuItem.setVisible(false);
                     Platform.runLater(() -> {
                         try {
                             new gameWinnerWindow(gameEngine);
@@ -296,6 +309,9 @@ public class GameWindow {
                             throw new RuntimeException(ex);
                         }
                     });
+                }else if(gameEngine.getUpdate()){
+                    message.appendText("Message: " + gameEngine.getUpdatePlayer() + " just Upload Puzzle!\n");
+                    gameEngine.setUpdate();
                 }
             }
         };
