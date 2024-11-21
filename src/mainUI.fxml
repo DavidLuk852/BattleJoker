@@ -45,13 +45,20 @@
                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
              </padding>
         </VBox>
-        <Button fx:id="goButton" text="Start Game!" visible="false" disable="true">
-            <font>
-                <Font size="15.0"/>
-            </font>
-        </Button>
         <VBox>
-            <TextArea fx:id="message" editable="false" prefWidth="300" prefHeight="200" focusTraversable="false">
+            <Button fx:id="goButton" text="Start Game!" visible="false" disable="true">
+                <font>
+                    <Font size="15.0"/>
+                </font>
+            </Button>
+            <Button fx:id="cancelButton" text="cancel" visible="false" disable="true" focusTraversable="false">
+                <font>
+                    <Font size="15.0"/>
+                </font>
+            </Button>
+        </VBox>
+        <VBox>
+            <TextArea fx:id="message" editable="false" prefWidth="410" prefHeight="200" focusTraversable="false">
                 <style>
                     -fx-font-size: 14px;
                 </style>

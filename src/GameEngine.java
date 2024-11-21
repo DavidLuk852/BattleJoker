@@ -42,6 +42,8 @@ public class GameEngine {
     private int newGame;
     private String updatePlayer;
     private boolean update = false;
+    private String cancelPlayer;
+    private boolean cancel = false;
 
     Socket clientSocket;
     DataOutputStream out;
@@ -97,6 +99,9 @@ public class GameEngine {
                     case 'K':
                         receiveUpdatePuzzle(in);
                         break;
+                    case 'B':
+                        receiveCancelAction(in);
+                        break;
                     default:
                         // print the direction
                         System.out.println(data);
@@ -107,16 +112,20 @@ public class GameEngine {
         }
     });
 
+    void receiveCancelAction(DataInputStream in) throws IOException {
+        cancelPlayer = in.readUTF();
+        cancel = true;
+        System.out.println(cancelPlayer);
+    }
     void receiveUpdatePuzzle(DataInputStream in) throws IOException {
         updatePlayer = in.readUTF();
         update = true;
+        System.out.println(updatePlayer);
     }
-
     void receiveNewGame(DataInputStream in) throws IOException {
         newGame = in.readInt();
         System.out.println(newGame);
     }
-
     void receiveWinner(DataInputStream in) throws IOException {
         WinnerName = in.readUTF();
         WinnerScore = in.readInt();
@@ -258,6 +267,15 @@ public class GameEngine {
     public void setUpdate(){
         this.update = false;
     }
+    public String getCancelPlayer(){
+        return cancelPlayer;
+    }
+    public boolean getCancel(){
+        return cancel;
+    }
+    public void setCancel(){
+        this.cancel = false;
+    }
     public String getCurrentPlayer() {
         return currentPlayer;
     }
@@ -311,6 +329,10 @@ public class GameEngine {
         return canMove;
     }
 
+    public int getMoveLeft(){
+        return moveLeft;
+    }
+
     public String getWinnerName(){
         return WinnerName;
     }
@@ -331,6 +353,10 @@ public class GameEngine {
         return newGame;
     }
 
+    public void cancelAction() throws IOException {
+        out.writeUTF("Cancel Last Action");
+        out.flush();
+    }
 
     public void savePuzzle(File file) throws IOException {
         try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {

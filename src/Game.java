@@ -118,6 +118,10 @@ public class Game {
                         handleMoveMerge(player, in, out);
                         break;
 
+                    case "Cancel Last Action":
+                        useCancelSkill(player);
+                        break;
+
                     default:
                         System.out.println("Unknown message: " + message);
                         break;
@@ -193,6 +197,14 @@ public class Game {
         int nextPlayerIndex = (currentPlayerIndex + 1) % clientList.size();
         currentPlayer = clientList.get(nextPlayerIndex);
         movesLeft = 4;
+
+        currentPlayer.skillUsed = false;
+        currentPlayer.previousBoard = null;
+        currentPlayer.previousScore = 0;
+        currentPlayer.previousLevel = 0;
+        currentPlayer.previousCombo = 0;
+        currentPlayer.previousTotalMoveCount = 0;
+
 
         DataOutputStream nextOut = new DataOutputStream(currentPlayer.socket.getOutputStream());
         sendTurnNotification(nextOut, true);
@@ -311,6 +323,13 @@ public class Game {
     public void moveMerge(String dir, Player player) {
         synchronized (board) {
             if (actionMap.containsKey(dir)) {
+                // Store previous state
+                player.previousBoard = board.clone();
+                player.previousScore = player.score;
+                player.previousLevel = level;
+                player.previousCombo = combo;
+                player.previousTotalMoveCount = player.totalMoveCount;
+
                 combo = numOfTilesMoved = 0;
 
                 // go to the hash map, find the corresponding method and call it
@@ -338,6 +357,32 @@ public class Game {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
+                }
+            }
+        }
+    }
+
+    public void useCancelSkill(Player player) throws IOException {
+        if (!player.skillUsed && player.previousBoard != null) {
+            // Revert to the previous state
+            System.arraycopy(player.previousBoard, 0, board, 0, board.length);
+            player.score = player.previousScore;
+            level = player.previousLevel;
+            combo = player.previousCombo;
+            player.totalMoveCount = player.previousTotalMoveCount;
+            player.skillUsed = true;
+            movesLeft += 1;
+
+            // Notify all players of the reverted state
+            synchronized (clientList) {
+                for (Player p : clientList) {
+                    DataOutputStream out = new DataOutputStream(p.socket.getOutputStream());
+                    sendArray(out);
+                    sendLevel(out);
+                    sendScore(out, player);
+                    sendCombo(out);
+                    sendMove(out, player);
+                    sendCancelAction(out, player);
                 }
             }
         }
@@ -377,9 +422,15 @@ public class Game {
         clientList.clear();
     }
 
+    void sendCancelAction(DataOutputStream out,Player p) throws IOException {
+        out.write('B');
+        out.writeUTF(p.name);
+        out.flush();
+    }
     void sendUpdatePuzzle(DataOutputStream out) throws IOException {
         out.write('K');
         out.writeUTF(currentPlayer.name);
+        out.flush();
     }
     void sendWinner(DataOutputStream out, Player p) throws IOException {
         out.write('W');

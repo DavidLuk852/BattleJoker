@@ -6,6 +6,12 @@ public class Player {
     int score;
     int totalMoveCount;
     int level;
+    boolean skillUsed = false;
+    int[] previousBoard;
+    int previousScore;
+    int previousLevel;
+    int previousCombo;
+    int previousTotalMoveCount;
 
 
     public Player(Socket socket, String name, int score, int totalMoveCount, int level) {
@@ -14,7 +20,6 @@ public class Player {
         this.score = score;
         this.totalMoveCount = totalMoveCount;
         this.level = level;
-
     }
 
 }

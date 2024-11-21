@@ -60,6 +60,9 @@ public class GameWindow {
     Button goButton;
 
     @FXML
+    Button cancelButton;
+
+    @FXML
     MenuItem saveMenuItem;
 
     @FXML
@@ -114,6 +117,16 @@ public class GameWindow {
         message.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
             event.consume();
         });
+        message.textProperty().addListener((observable, oldValue, newValue) -> {
+            message.setScrollTop(Double.MAX_VALUE); // Scroll to the bottom
+        });
+        cancelButton.setOnAction(event -> {
+            try {
+                cancelAction(event);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         stage.show();
 
@@ -140,6 +153,9 @@ public class GameWindow {
                 gameEngine.setGameStarted(true);
                 initCanvas();
                 gameStart();
+
+                saveMenuItem.setVisible(true);
+                loadMenuItem.setVisible(true);
             } else {
                 waitNewGame();
             }
@@ -171,6 +187,11 @@ public class GameWindow {
         scene.setFill(Color.rgb((int)(red*  255), (int)(green * 255), (int)(blue * 255)));
     }
 
+    private void cancelAction(Event event) throws IOException {
+        cancelButton.setVisible(false);
+        cancelButton.setDisable(true);
+        gameEngine.cancelAction();
+    }
 
     private void savePuzzle() {
         FileChooser fileChooser = new FileChooser();
@@ -297,6 +318,7 @@ public class GameWindow {
                 updateCurrentPlayer();
                 render();
                 updateTimerDisplay();
+                updateMessage();
                 if (gameEngine.isGameOver()) {
                     System.out.println("Game Over!");
                     animationTimer.stop();
@@ -309,13 +331,26 @@ public class GameWindow {
                             throw new RuntimeException(ex);
                         }
                     });
-                }else if(gameEngine.getUpdate()){
-                    message.appendText("Message: " + gameEngine.getUpdatePlayer() + " just Upload Puzzle!\n");
-                    gameEngine.setUpdate();
+                }else if(gameEngine.getMoveLeft() == 4){
+                    cancelButton.setVisible(true);
+                    cancelButton.setDisable(false);
+                } else if (gameEngine.getMoveLeft() == 0) {
+                    cancelButton.setVisible(false);
+                    cancelButton.setDisable(true);
                 }
             }
         };
         canvas.requestFocus();
+    }
+
+    private void updateMessage(){
+        if(gameEngine.getUpdate()){
+            message.appendText("Message: " + gameEngine.getUpdatePlayer() + " just Update Last Action!\n");
+            gameEngine.setUpdate();
+        }else if(gameEngine.getCancel()){
+            message.appendText("Message: " + gameEngine.getCancelPlayer() + " just Cancel Last Action!\n");
+            gameEngine.setCancel();
+        }
     }
 
     private void updateCurrentPlayer() {

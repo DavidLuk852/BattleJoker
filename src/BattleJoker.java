@@ -1,19 +1,11 @@
 import javafx.application.Application;
 import javafx.stage.Stage;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.Socket;
 import java.sql.SQLException;
 
 public class BattleJoker extends Application {
-    private Socket socket;
-    private DataInputStream in;
-    private DataOutputStream out;
-    private String playerName;
-    private int playerIndex;
     @Override
     public void start(Stage primaryStage) {
         try {
