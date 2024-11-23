@@ -379,10 +379,10 @@ public class Game {
                     DataOutputStream out = new DataOutputStream(p.socket.getOutputStream());
                     sendArray(out);
                     sendLevel(out);
-                    sendScore(out, player);
+                    sendScore(out, p);
                     sendCombo(out);
-                    sendMove(out, player);
-                    sendCancelAction(out, player);
+                    sendMove(out, p);
+                    sendCancelAction(out, p);
                 }
             }
         }
