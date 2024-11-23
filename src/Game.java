@@ -382,7 +382,7 @@ public class Game {
                     sendScore(out, p);
                     sendCombo(out);
                     sendMove(out, p);
-                    sendCancelAction(out, p);
+                    sendCancelAction(out, player);
                 }
             }
         }
